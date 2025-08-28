@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Журнал действий</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Журнал действий</h1>
+		<div class="actions">
+			<a class="btn" href="/web">Список</a>
+			<a class="btn" href="/web/matches">Совпадения</a>
+		</div>
+		<div class="card form">
+			<form method="get" class="filters-form">
+				<div class="row">
+					<label>С даты
+						<input type="date" name="date_from" value="{{ date_from or '' }}" />
+					</label>
+					<label>По дату
+						<input type="date" name="date_to" value="{{ date_to or '' }}" />
+					</label>
+					<button class="btn primary" type="submit">Фильтровать</button>
+				</div>
+			</form>
+		</div>
+		<div class="card">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Время</th>
+						<th>Действие</th>
+						<th>Ресурс</th>
+						<th>Актор</th>
+						<th>Результат</th>
+						<th>Детали</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for r in rows %}
+					<tr>
+						<td>{{ r.id }}</td>
+						<td>{{ r.created_at|format_datetime }}</td>
+						<td>{{ r.action|loc_action }}</td>
+						<td>{{ r.resource|loc_resource }}</td>
+						<td>{{ r.actor or '-' }}</td>
+						<td>{{ r.result or '-' }}</td>
+						<td><pre style="margin:0; white-space:pre-wrap;">{{ r.payload|loc_payload }}</pre></td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

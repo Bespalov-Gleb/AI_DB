@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Изменение записи #{{ item.id }}</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Изменение записи #{{ item.id }}</h1>
+		<p><a class="back" href="/web/detail/{{ item.id }}">← назад</a></p>
+		<div class="card form">
+			<form method="post">
+				<div class="grid">
+					<label>Тип
+						<input name="type" value="{{ item.type }}" placeholder="продажа | покупка | контракт" />
+					</label>
+					<label>Наименование
+						<input name="title" value="{{ item.title }}" placeholder="Введите наименование" />
+					</label>
+					<label>Описание
+						<textarea name="description" rows="3" placeholder="Краткое описание">{{ item.description or '' }}</textarea>
+					</label>
+					<label>Характеристики (JSON)
+						<textarea name="characteristics" rows="3" placeholder='{"мощность":"2кВт"}'>{{ item.characteristics or '' }}</textarea>
+					</label>
+					<label>Количество
+						<input name="quantity" type="number" value="{{ item.quantity or '' }}" placeholder="1" />
+					</label>
+					<label>Цена
+						<input name="price" value="{{ item.price or '' }}" placeholder="120000" />
+					</label>
+					<label>Город
+						<input name="location" value="{{ item.location or '' }}" placeholder="Москва" />
+					</label>
+					<label>Контакты (свободный текст)
+						<textarea name="contact" rows="3" placeholder="Имя, телефон, e-mail, должность и др.">{{ item.contact or '' }}</textarea>
+					</label>
+				</div>
+				<div style="margin-top:12px; display:flex; gap:8px;">
+					<button class="btn primary" type="submit">Сохранить</button>
+					<a class="btn" href="/web/detail/{{ item.id }}">Отмена</a>
+				</div>
+			</form>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: ai_db_postgres
+    environment:
+      POSTGRES_DB: ai_db
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ai_db_network
+
+  app:
+    build: .
+    container_name: ai_db_app
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - TIMEZONE=${TIMEZONE}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_TO=${SMTP_TO}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_REGION=${S3_REGION}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - UPLOAD_DIR=${UPLOAD_DIR}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./secrets:/app/secrets
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - ai_db_network
+
+  bot:
+    build: .
+    container_name: ai_db_bot
+    command: python -m bot.main
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - TIMEZONE=${TIMEZONE}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
+      - WEB_BASE_URL=${WEB_BASE_URL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_TO=${SMTP_TO}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_REGION=${S3_REGION}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - UPLOAD_DIR=${UPLOAD_DIR}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./secrets:/app/secrets
+    depends_on:
+      - postgres
+      - app
+    restart: unless-stopped
+    networks:
+      - ai_db_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ai_db_network:
+    driver: bridge 

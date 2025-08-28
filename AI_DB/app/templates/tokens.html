@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Доступ к веб-интерфейсу — токены</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Токены доступа</h1>
+		<div class="actions">
+			<a class="btn" href="/web">Список</a>
+			<a class="btn" href="/web/audit">Журнал</a>
+			<a class="btn" href="/web/matches">Совпадения</a>
+		</div>
+		<div class="card form">
+			<form method="post" action="/web/tokens">
+				<div class="grid">
+					<label>Срок (минуты)
+						<input name="minutes" type="number" min="0" placeholder="0 — без срока" />
+					</label>
+				</div>
+				<div style="margin-top:12px;">
+					<button class="btn primary" type="submit">Создать токен</button>
+				</div>
+			</form>
+		</div>
+		<div class="card">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Токен</th>
+						<th>Истекает</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for t in items %}
+					<tr>
+						<td>{{ t.id }}</td>
+						<td style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ t.token }}</td>
+						<td>{{ t.expires_at|format_datetime if t.expires_at else 'без срока' }}</td>
+						<td style="display:flex; gap:8px;">
+							<button class="btn" type="button" onclick="copyLink('{{ base }}/web/?token={{ t.token }}')">Копировать ссылку</button>
+							<form method="post" action="/web/tokens/revoke" onsubmit="return confirm('Отозвать токен?');">
+								<input type="hidden" name="token" value="{{ t.token }}" />
+								<button class="btn" type="submit">Отозвать</button>
+							</form>
+						</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<script>
+	function copyLink(link) {
+		navigator.clipboard.writeText(link).then(function () {
+			alert('Ссылка скопирована: ' + link);
+		}).catch(function (err) {
+			alert('Не удалось скопировать: ' + err);
+		});
+	}
+	</script>
+</body>
+</html>

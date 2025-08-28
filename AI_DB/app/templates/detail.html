@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Запись #{{ item.id }}</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Запись #{{ item.id }}</h1>
+		<p><a class="back" href="/web">← к списку</a></p>
+		<div class="actions">
+			<a class="btn" href="/web/matches">Совпадения</a>
+			<a class="btn" href="/web/audit">Журнал</a>
+			<a class="btn" href="/web/detail/{{ item.id }}/edit">Изменить</a>
+			<form method="post" action="/web/detail/{{ item.id }}/delete" style="display:inline" onsubmit="return confirm('Удалить запись #{{ item.id }}?');">
+				<button class="btn" type="submit">Удалить</button>
+			</form>
+		</div>
+		<div class="card">
+			<table class="kv">
+				<tr><th>Наименование</th><td>{{ item.title }}</td></tr>
+				<tr><th>Количество</th><td>{{ item.quantity or '-' }}</td></tr>
+				<tr><th>Цена</th><td>{{ item.price or '-' }}</td></tr>
+				<tr><th>Город</th><td>{{ item.location or '-' }}</td></tr>
+				<tr><th>Контакты</th><td>{{ item.contact or '-' }}</td></tr>
+				<tr><th>Тип</th><td>{{ item.type|loc_type }}</td></tr>
+				<tr><th>Дата</th><td>{{ item.created_at|format_datetime if item.created_at else '-' }}</td></tr>
+				<tr><th>Описание</th><td>{{ item.description or '-' }}</td></tr>
+				<tr><th>Характеристики</th><td>{{ item.characteristics or '-' }}</td></tr>
+			</table>
+		</div>
+
+		<h3>Фотографии</h3>
+		{% set links = photos if photos is defined else item.photo_links %}
+		{% if links %}
+			<div class="photos">
+			{% for link in links %}
+				<div class="photo">
+					{% if link.startswith('/uploads/') %}
+						<a href="{{ link }}" target="_blank"><img src="{{ link }}" alt="photo" /></a>
+					{% else %}
+						<a href="{{ link }}" target="_blank">{{ link }}</a>
+					{% endif %}
+				</div>
+			{% endfor %}
+			</div>
+		{% else %}
+			<p class="muted">Нет ссылок на фото.</p>
+		{% endif %}
+	</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Совпадения</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Совпадения</h1>
+		<p><a class="back" href="/web">← к списку</a></p>
+		<div class="card form">
+			<form method="get">
+				<div class="grid">
+					<label>Порог
+						<input type="number" name="threshold" min="0" max="1" step="0.01" value="{{ '%.2f'|format(threshold) }}" />
+					</label>
+					<label>Порог нечёткого совпадения названия
+						<input type="number" name="fuzzy_token_threshold" min="0" max="1" step="0.01" value="{{ '%.2f'|format(fuzzy_token_threshold or 0.6) }}" />
+					</label>
+					<label>Вес: Наименование
+						<input type="number" name="w_title" min="0" max="1" step="0.01" value="{{ '%.2f'|format(w_title) }}" />
+					</label>
+					<label>Вес: Характеристики
+						<input type="number" name="w_char" min="0" max="1" step="0.01" value="{{ '%.2f'|format(w_char) }}" />
+					</label>
+					<label>Вес: Город
+						<input type="number" name="w_loc" min="0" max="1" step="0.01" value="{{ '%.2f'|format(w_loc) }}" />
+					</label>
+					<label>Вес: Цена
+						<input type="number" name="w_price" min="0" max="1" step="0.01" value="{{ '%.2f'|format(w_price) }}" />
+					</label>
+					<label>Допуск цены, ₽
+						<input type="number" name="price_tolerance_abs" min="0" step="0.01" value="{{ price_tolerance_abs or '' }}" />
+					</label>
+					<label>Допуск цены, %
+						<input type="number" name="price_tolerance_pct" min="0" max="100" step="0.1" value="{{ price_tolerance_pct or '' }}" />
+					</label>
+				</div>
+				<div style="margin-top:12px; display:flex; gap:8px;">
+					<button class="btn primary" type="submit">Пересчитать</button>
+					<a class="btn" href="/web/matches/export?threshold={{ threshold }}&w_title={{ w_title }}&w_char={{ w_char }}&w_loc={{ w_loc }}&w_price={{ w_price }}&price_tolerance_abs={{ price_tolerance_abs or '' }}&price_tolerance_pct={{ price_tolerance_pct or '' }}&fuzzy_token_threshold={{ fuzzy_token_threshold or 0.6 }}">Экспорт в Excel</a>
+				</div>
+			</form>
+		</div>
+
+		<div class="card">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Оценка</th>
+						<th>Спрос</th>
+						<th>Предложение</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for p in pairs %}
+					<tr>
+						<td>{{ '%.3f'|format(p.score) }}</td>
+						<td>
+							<div><b>#{{ p.Demand.id }}</b> — {{ p.Demand.title }} ({{ p.Demand.location or '-' }}, {{ p.Demand.price or '-' }})</div>
+							<div class="muted">{{ p.Demand.contact or '' }}</div>
+							<div><a class="btn" href="/web/detail/{{ p.Demand.id }}">Открыть</a></div>
+						</td>
+						<td>
+							<div><b>#{{ p.Sale.id }}</b> — {{ p.Sale.title }} ({{ p.Sale.location or '-' }}, {{ p.Sale.price or '-' }})</div>
+							<div class="muted">{{ p.Sale.contact or '' }}</div>
+							<div><a class="btn" href="/web/detail/{{ p.Sale.id }}">Открыть</a></div>
+						</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

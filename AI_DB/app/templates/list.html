@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Список записей</title>
+	<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>Записи</h1>
+		<div class="actions">
+			<a class="btn" href="/web/matches">Совпадения</a>
+			<a class="btn" href="/web/audit">Журнал</a>
+			<a class="btn" href="/web/tokens">Токены</a>
+		</div>
+		<div class="card filters">
+			<form method="get" class="filters-form">
+				<div class="row">
+					<label>Наименование
+						<input type="text" name="q" value="{{ q or '' }}" placeholder="паг 14" />
+					</label>
+					<label>Порог нечёткого совпадения
+						<input type="number" name="fuzzy_token_threshold" value="{{ '%.2f'|format(fuzzy_token_threshold or 0.6) }}" min="0" max="1" step="0.01" />
+					</label>
+					<label>Город
+						<input type="text" name="city" value="{{ city or '' }}" placeholder="Москва" />
+					</label>
+					<label>Тип
+						<input type="text" name="type" value="{{ ltype or '' }}" placeholder="продажа | покупка | контракт" />
+					</label>
+					<label>На странице
+						<input type="number" name="per_page" value="{{ per_page }}" min="1" max="50" />
+					</label>
+					<button class="btn primary" type="submit">Фильтровать</button>
+				</div>
+			</form>
+		</div>
+
+		<p class="muted">Всего: {{ total }} записей</p>
+
+		<div class="card">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Наименование</th>
+						<th>Количество</th>
+						<th>Цена</th>
+						<th>Город</th>
+						<th>Контакты</th>
+						<th>Тип</th>
+						<th>Дата</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for it in items %}
+					<tr>
+						<td>{{ it.id }}</td>
+						<td>{{ it.title }}</td>
+						<td>{{ it.quantity or '-' }}</td>
+						<td>{{ it.price or '-' }}</td>
+						<td>{{ it.location or '-' }}</td>
+						<td>{{ it.contact or '-' }}</td>
+						<td><span class="badge {{ it.type }}">{{ it.type|loc_type }}</span></td>
+						<td>{{ it.created_at|format_datetime if it.created_at else '-' }}</td>
+						<td><a class="btn" href="/web/detail/{{ it.id }}">Открыть</a></td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="pagination">
+			<span>Страница: {{ page }} из {{ pages }}</span>
+			<div class="pages">
+				{% set show_dots_start = false %}
+				{% set show_dots_end = false %}
+				
+				{% for p in range(1, pages + 1) %}
+					{% if p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+						{% if p == 1 and page > 4 %}
+							{% set show_dots_start = true %}
+						{% endif %}
+						{% if p == pages and page < pages - 3 %}
+							{% set show_dots_end = true %}
+						{% endif %}
+						
+						{% if show_dots_start and p == 1 %}
+							<span class="dots">...</span>
+						{% endif %}
+						
+						<a class="page {{ 'active' if p == page else '' }}" href="?q={{ q or '' }}&fuzzy_token_threshold={{ fuzzy_token_threshold or 0.6 }}&city={{ city or '' }}&type={{ ltype or '' }}&page={{ p }}&per_page={{ per_page }}">{{ p }}</a>
+						
+						{% if show_dots_end and p == pages %}
+							<span class="dots">...</span>
+						{% endif %}
+					{% elif p == page - 3 or p == page + 3 %}
+						<span class="dots">...</span>
+					{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</body>
+</html>
