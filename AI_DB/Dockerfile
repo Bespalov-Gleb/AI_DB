@@ -1,23 +1,33 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-slim as base
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-WORKDIR /app
-
-# System deps
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+# Установка рабочей директории
+WORKDIR /app
+
+# Копирование файлов зависимостей
+COPY requirements.txt .
+
+# Установка Python зависимостей
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Копирование кода приложения
 COPY . .
 
-# Default command runs API
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Создание необходимых директорий
+RUN mkdir -p uploads secrets
 
-# To run bot container, override command:
-# docker run ... python -m bot.main
+# Установка прав доступа
+RUN chmod +x *.sh
+
+# Открытие порта
+EXPOSE 8000
+
+# Команда по умолчанию
+CMD ["python", "-m", "app.main"]
