@@ -13,6 +13,11 @@ services:
     restart: unless-stopped
     networks:
       - ai_db_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_user -d ai_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -51,10 +56,20 @@ services:
       - ./uploads:/app/uploads
       - ./secrets:/app/secrets
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - ai_db_network
+    command: >
+      sh -c "
+        echo '⏳ Ждем запуска базы данных...' &&
+        sleep 10 &&
+        echo '🔧 Инициализируем базу данных...' &&
+        python init_db.py &&
+        echo '🚀 Запускаем приложение...' &&
+        python -m app.main
+      "
 
   bot:
     build: .
