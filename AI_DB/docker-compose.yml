@@ -34,6 +34,15 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ai_db_api
+    command: >
+      sh -c "
+        echo '⏳ Ждем запуска базы данных...' &&
+        sleep 10 &&
+        echo '🔧 Инициализируем базу данных...' &&
+        python init_db.py &&
+        echo '🚀 Запускаем приложение...' &&
+        python -m app.main
+      "
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8000
@@ -69,7 +78,15 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ai_db_bot
-    command: ["python", "-m", "bot.main"]
+    command: >
+      sh -c "
+        echo '⏳ Ждем инициализации базы данных...' &&
+        sleep 30 &&
+        echo '🔧 Проверяем таблицы...' &&
+        python init_db.py &&
+        echo '🤖 Запускаем бота...' &&
+        python -m bot.main
+      "
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       POSTGRES_HOST: postgres
@@ -86,6 +103,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      api:
+        condition: service_started
 
 volumes:
   postgres_data:

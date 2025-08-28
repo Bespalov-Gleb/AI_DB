@@ -74,7 +74,15 @@ services:
   bot:
     build: .
     container_name: ai_db_bot
-    command: python -m bot.main
+    command: >
+      sh -c "
+        echo '⏳ Ждем инициализации базы данных...' &&
+        sleep 30 &&
+        echo '🔧 Проверяем таблицы...' &&
+        python init_db.py &&
+        echo '🤖 Запускаем бота...' &&
+        python -m bot.main
+      "
     environment:
       - APP_ENV=${APP_ENV}
       - APP_HOST=${APP_HOST}
@@ -107,8 +115,10 @@ services:
       - ./uploads:/app/uploads
       - ./secrets:/app/secrets
     depends_on:
-      - postgres
-      - app
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_started
     restart: unless-stopped
     networks:
       - ai_db_network
