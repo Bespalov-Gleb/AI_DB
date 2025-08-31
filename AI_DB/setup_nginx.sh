@@ -1,69 +1,61 @@
 #!/bin/bash
 
-# Скрипт настройки Nginx для AI DB
-# Использование: ./setup_nginx.sh your-domain.com
-
-set -e
-
-if [ $# -eq 0 ]; then
-    echo "❌ Укажите домен!"
-    echo "Использование: ./setup_nginx.sh your-domain.com"
-    exit 1
-fi
-
-DOMAIN=$1
-
-echo "🌐 Настраиваем Nginx для домена: $DOMAIN"
-
-# Проверяем, установлен ли Nginx
-if ! command -v nginx &> /dev/null; then
-    echo "📦 Устанавливаем Nginx..."
-    sudo apt update
-    sudo apt install -y nginx
-fi
+# Настройка Nginx для AI_DB
+echo "🔧 Настройка Nginx..."
 
 # Создаем конфигурацию Nginx
-echo "📝 Создаем конфигурацию Nginx..."
-sudo tee /etc/nginx/sites-available/ai-db > /dev/null <<EOF
+cat > /etc/nginx/sites-available/ai-db.ru << 'EOF'
 server {
     listen 80;
-    server_name $DOMAIN www.$DOMAIN;
-
+    server_name ai-db.ru www.ai-db.ru;
+    
+    # Логи
+    access_log /var/log/nginx/ai-db.ru.access.log;
+    error_log /var/log/nginx/ai-db.ru.error.log;
+    
+    # Проксирование на приложение
     location / {
         proxy_pass http://localhost:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Таймауты
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
-
-    # Увеличиваем лимиты для загрузки файлов
-    client_max_body_size 100M;
-    proxy_read_timeout 300s;
-    proxy_connect_timeout 75s;
+    
+    # Статические файлы
+    location /static/ {
+        alias /root/AI_DB/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Здоровье приложения
+    location /health {
+        proxy_pass http://localhost:8000/health;
+        access_log off;
+    }
 }
 EOF
 
 # Активируем сайт
-echo "🔗 Активируем сайт..."
-sudo ln -sf /etc/nginx/sites-available/ai-db /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/ai-db.ru /etc/nginx/sites-enabled/
 
-# Удаляем дефолтный сайт
-sudo rm -f /etc/nginx/sites-enabled/default
+# Удаляем дефолтную конфигурацию
+rm -f /etc/nginx/sites-enabled/default
 
 # Проверяем конфигурацию
-echo "🔍 Проверяем конфигурацию Nginx..."
-sudo nginx -t
+nginx -t
 
-# Перезапускаем Nginx
-echo "🔄 Перезапускаем Nginx..."
-sudo systemctl restart nginx
-sudo systemctl enable nginx
-
-echo "✅ Nginx настроен!"
-echo ""
-echo "🌐 Сайт доступен по адресу: http://$DOMAIN"
-echo ""
-echo "🔒 Для настройки SSL выполните:"
-echo "sudo apt install -y certbot python3-certbot-nginx"
-echo "sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN" 
+if [ $? -eq 0 ]; then
+    echo "✅ Конфигурация Nginx корректна"
+    systemctl reload nginx
+    echo "✅ Nginx перезагружен"
+else
+    echo "❌ Ошибка в конфигурации Nginx"
+    exit 1
+fi 
