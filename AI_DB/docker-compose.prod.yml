@@ -31,7 +31,7 @@ services:
         echo '🔧 Инициализируем базу данных...' &&
         python init_db.py &&
         echo '🚀 Запускаем приложение...' &&
-        python -m app.main
+        uvicorn app.main:app --host 0.0.0.0 --port 5000
       "
     environment:
       APP_HOST: 0.0.0.0
