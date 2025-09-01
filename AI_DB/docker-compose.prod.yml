@@ -1,8 +1,8 @@
-version: '3.8'
+version: '3.9'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: ai_db_postgres
     environment:
       POSTGRES_DB: ai_db
@@ -10,57 +10,20 @@ services:
       POSTGRES_PASSWORD: ai_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - ai_db_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ai_user -d ai_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  app:
-    build: .
-    container_name: ai_db_app
-    environment:
-      - APP_ENV=production
-      - APP_HOST=0.0.0.0
-      - APP_PORT=5000
-      - TIMEZONE=Europe/Moscow
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=ai_db
-      - POSTGRES_USER=ai_user
-      - POSTGRES_PASSWORD=ai_password
-      - OPENAI_API_KEY=
-      - TELEGRAM_BOT_TOKEN=
-      - ADMIN_CHAT_ID=
-      - WEB_BASE_URL=https://ai-db.ru
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=admin
-      - SMTP_HOST=
-      - SMTP_PORT=587
-      - SMTP_USERNAME=
-      - SMTP_PASSWORD=
-      - SMTP_FROM=
-      - SMTP_TO=
-      - S3_ENDPOINT_URL=
-      - S3_REGION=
-      - S3_ACCESS_KEY_ID=
-      - S3_SECRET_ACCESS_KEY=
-      - S3_BUCKET=
-      - UPLOAD_DIR=uploads
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./uploads:/app/uploads
-      - ./secrets:/app/secrets
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - ai_db_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_db_api
     command: >
       sh -c "
         echo '⏳ Ждем запуска базы данных...' &&
@@ -70,9 +33,43 @@ services:
         echo '🚀 Запускаем приложение...' &&
         python -m app.main
       "
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 5000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ai_db
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ai_password
+      TIMEZONE: Europe/Moscow
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+      OPENAI_API_KEY: 
+      ADMIN_CHAT_ID: 
+      TELEGRAM_BOT_TOKEN: 
+      SMTP_HOST: 
+      SMTP_PORT: 587
+      SMTP_USERNAME: 
+      SMTP_PASSWORD: 
+      SMTP_FROM: 
+      SMTP_TO: 
+      TEST_EMAIL_ONCE: 0
+      WEB_BASE_URL: https://ai-db.ru
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ai_db_network
 
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ai_db_bot
     command: >
       sh -c "
@@ -84,40 +81,22 @@ services:
         python -m bot.main
       "
     environment:
-      - APP_ENV=production
-      - APP_HOST=0.0.0.0
-      - APP_PORT=5000
-      - TIMEZONE=Europe/Moscow
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=ai_db
-      - POSTGRES_USER=ai_user
-      - POSTGRES_PASSWORD=ai_password
-      - OPENAI_API_KEY=
-      - TELEGRAM_BOT_TOKEN=
-      - ADMIN_CHAT_ID=
-      - WEB_BASE_URL=https://ai-db.ru
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=admin
-      - SMTP_HOST=
-      - SMTP_PORT=587
-      - SMTP_USERNAME=
-      - SMTP_PASSWORD=
-      - SMTP_FROM=
-      - SMTP_TO=
-      - S3_ENDPOINT_URL=
-      - S3_REGION=
-      - S3_ACCESS_KEY_ID=
-      - S3_SECRET_ACCESS_KEY=
-      - S3_BUCKET=
-      - UPLOAD_DIR=uploads
+      TELEGRAM_BOT_TOKEN: 
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ai_db
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ai_password
+      TIMEZONE: Europe/Moscow
+      ADMIN_CHAT_ID: 
+      OPENAI_API_KEY: 
+      WEB_BASE_URL: https://ai-db.ru
     volumes:
-      - ./uploads:/app/uploads
-      - ./secrets:/app/secrets
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
-      app:
+      api:
         condition: service_started
     restart: unless-stopped
     networks:
@@ -125,6 +104,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   ai_db_network:
