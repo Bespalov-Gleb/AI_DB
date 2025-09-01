@@ -51,7 +51,7 @@ services:
       - S3_BUCKET=${S3_BUCKET}
       - UPLOAD_DIR=${UPLOAD_DIR}
     ports:
-      - "8000:8000"
+      - "5000:5000"
     volumes:
       - ./uploads:/app/uploads
       - ./secrets:/app/secrets

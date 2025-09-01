@@ -12,11 +12,11 @@ load_dotenv()
 class Settings:
 	app_env: str = os.getenv("APP_ENV", "local")
 	app_host: str = os.getenv("APP_HOST", "0.0.0.0")
-	app_port: int = int(os.getenv("APP_PORT", "8000"))
+	app_port: int = int(os.getenv("APP_PORT", "5000")) if os.getenv("APP_PORT") else 5000
 	timezone: str = os.getenv("TIMEZONE", "Europe/Moscow")
 
 	postgres_host: str = os.getenv("POSTGRES_HOST", "localhost")
-	postgres_port: int = int(os.getenv("POSTGRES_PORT", "5432"))
+	postgres_port: int = int(os.getenv("POSTGRES_PORT", "5432")) if os.getenv("POSTGRES_PORT") else 5432
 	postgres_db: str = os.getenv("POSTGRES_DB", "ai_db")
 	postgres_user: str = os.getenv("POSTGRES_USER", "ai_user")
 	postgres_password: str = os.getenv("POSTGRES_PASSWORD", "ai_password")
@@ -27,7 +27,7 @@ class Settings:
 	admin_chat_id: Optional[int] = int(os.getenv("ADMIN_CHAT_ID", "0")) or None
 
 	smtp_host: Optional[str] = os.getenv("SMTP_HOST")
-	smtp_port: Optional[int] = int(os.getenv("SMTP_PORT", "587")) if os.getenv("SMTP_PORT") else None
+	smtp_port: Optional[int] = int(os.getenv("SMTP_PORT", "587")) if os.getenv("SMTP_PORT") else 587
 	smtp_username: Optional[str] = os.getenv("SMTP_USERNAME")
 	smtp_password: Optional[str] = os.getenv("SMTP_PASSWORD")
 	smtp_from: Optional[str] = os.getenv("SMTP_FROM")
