@@ -36,6 +36,18 @@ def _translate_columns_to_russian(df: pd.DataFrame) -> pd.DataFrame:
         "Demand": "Спрос",
         "Sale": "Предложение",
         
+        # Детальные поля для совпадений
+        "demand_id": "ID спроса",
+        "demand_title": "Наименование спроса",
+        "demand_location": "Город спроса",
+        "demand_price": "Цена спроса",
+        "demand_contact": "Контакты спроса",
+        "sale_id": "ID предложения",
+        "sale_title": "Наименование предложения",
+        "sale_location": "Город предложения",
+        "sale_price": "Цена предложения",
+        "sale_contact": "Контакты предложения",
+        
         # Поля аудита
         "actor": "Пользователь",
         "action": "Действие",
