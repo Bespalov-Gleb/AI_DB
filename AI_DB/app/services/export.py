@@ -14,6 +14,44 @@ import json
 from app.services.text_normalizer import normalize_contact
 
 
+def _translate_columns_to_russian(df: pd.DataFrame) -> pd.DataFrame:
+    """Переводит названия колонок DataFrame на русский язык"""
+    column_mapping = {
+        # Основные поля
+        "id": "ID",
+        "type": "Тип",
+        "title": "Наименование",
+        "description": "Описание",
+        "characteristics": "Характеристики",
+        "quantity": "Количество",
+        "price": "Цена",
+        "location": "Город",
+        "contact": "Контакты",
+        "photo_links": "Фотографии",
+        "created_at": "Дата создания",
+        "updated_at": "Дата обновления",
+        
+        # Поля для совпадений
+        "score": "Оценка совпадения",
+        "Demand": "Спрос",
+        "Sale": "Предложение",
+        
+        # Поля аудита
+        "actor": "Пользователь",
+        "action": "Действие",
+        "resource": "Ресурс",
+        "result": "Результат",
+        "payload": "Детали",
+        
+        # Статистика
+        "count": "Количество"
+    }
+    
+    # Переименовываем колонки
+    df = df.rename(columns=column_mapping)
+    return df
+
+
 def export_listings_to_excel(
 	listings: Iterable[Listing],
 	filepath: str | Path,
@@ -41,6 +79,10 @@ def export_listings_to_excel(
 			"updated_at": l.updated_at,
 		})
 	df = pd.DataFrame(rows)
+	
+	# Переводим колонки на русский
+	df = _translate_columns_to_russian(df)
+	
 	filepath = str(filepath)
 	df.to_excel(filepath, index=False)
 
@@ -50,6 +92,10 @@ def export_listings_to_excel(
 
 def export_matches_to_excel(matches: List[dict], filepath: str | Path) -> str:
 	df = pd.DataFrame(matches)
+	
+	# Переводим колонки на русский
+	df = _translate_columns_to_russian(df)
+	
 	filepath = str(filepath)
 	df.to_excel(filepath, index=False)
 	_auto_fit_excel(filepath)
@@ -69,11 +115,16 @@ def export_stats_to_excel(listings: List[Listing], filepath: str | Path) -> str:
 		for l in listings
 	])
 
+	# Переводим колонки на русский для каждого листа
+	by_type = _translate_columns_to_russian(by_type)
+	by_city = _translate_columns_to_russian(by_city)
+	raw = _translate_columns_to_russian(raw)
+
 	filepath = str(filepath)
 	with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
-		by_type.to_excel(writer, index=False, sheet_name="by_type")
-		by_city.to_excel(writer, index=False, sheet_name="by_city")
-		raw.to_excel(writer, index=False, sheet_name="raw")
+		by_type.to_excel(writer, index=False, sheet_name="По типу")
+		by_city.to_excel(writer, index=False, sheet_name="По городу")
+		raw.to_excel(writer, index=False, sheet_name="Список")
 
 	# Автоподбор для каждого листа
 	wb = load_workbook(filepath)
@@ -109,6 +160,10 @@ def export_audit_to_excel(audit: List[AuditLog], filepath: str | Path) -> str:
 			"payload": a.payload,
 		})
 	df = pd.DataFrame(rows)
+	
+	# Переводим колонки на русский
+	df = _translate_columns_to_russian(df)
+	
 	filepath = str(filepath)
 	df.to_excel(filepath, index=False)
 	_auto_fit_excel(filepath)

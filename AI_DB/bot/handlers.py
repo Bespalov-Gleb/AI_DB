@@ -127,6 +127,16 @@ async def cmd_list_ru(message: Message) -> None:
 	await cmd_list(message)
 
 
+@router.message(F.text.casefold().in_({"/показать", "показать"}))
+async def cmd_list_ru2(message: Message) -> None:
+	await cmd_list(message)
+
+
+@router.message(F.text.casefold().in_({"/записи", "записи"}))
+async def cmd_list_ru3(message: Message) -> None:
+	await cmd_list(message)
+
+
 @router.message(F.text.casefold().startswith("/удалить"))
 async def cmd_delete_ru_slash(message: Message) -> None:
 	await cmd_delete(message)
@@ -159,6 +169,16 @@ async def cmd_remind_ru(message: Message) -> None:
 
 @router.message(F.text.casefold().in_({"/напоминания", "напоминания"}))
 async def cmd_reminders_ru(message: Message) -> None:
+	await cmd_reminders(message)
+
+
+@router.message(F.text.casefold().in_({"/мои_напоминания", "мои напоминания"}))
+async def cmd_reminders_ru2(message: Message) -> None:
+	await cmd_reminders(message)
+
+
+@router.message(F.text.casefold().in_({"/активные_напоминания", "активные напоминания"}))
+async def cmd_reminders_ru3(message: Message) -> None:
 	await cmd_reminders(message)
 
 
@@ -237,6 +257,405 @@ async def cmd_tokens_ru(message: Message) -> None:
 	await cmd_tokens(message)
 
 
+# Добавляем недостающие алиасы для команд, которые работают только со слешем
+@router.message(F.text.casefold().in_({"/помощь", "помощь"}))
+async def cmd_help_ru(message: Message) -> None:
+	await cmd_help(message)
+
+
+@router.message(F.text.casefold().in_({"/справка", "справка"}))
+async def cmd_help_ru2(message: Message) -> None:
+	await cmd_help(message)
+
+
+@router.message(F.text.casefold().in_({"/что_умеешь", "что умеешь", "что умеешь?"}))
+async def cmd_help_ru3(message: Message) -> None:
+	await cmd_help(message)
+
+
+@router.message(F.text.casefold().in_({"/какие_команды", "какие команды", "какие команды?"}))
+async def cmd_help_ru4(message: Message) -> None:
+	await cmd_help(message)
+
+
+@router.message(F.text.casefold().in_({"/импорт", "импорт"}))
+async def cmd_import_ru(message: Message) -> None:
+	await message.answer("Чтобы импортировать, отправьте Excel-файл (.xlsx) в чат — я его загружу и объединю с базой.")
+
+
+@router.message(F.text.casefold().in_({"/редактировать", "редактировать"}))
+async def cmd_edit_ru2(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().in_({"/обновить", "обновить"}))
+async def cmd_edit_ru3(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().in_({"/создать_токен", "создать токен"}))
+async def cmd_grant_ru2(message: Message) -> None:
+	await cmd_grant(message)
+
+
+@router.message(F.text.casefold().in_({"/убрать_токен", "убрать токен"}))
+async def cmd_revoke_ru2(message: Message) -> None:
+	await cmd_revoke(message)
+
+
+@router.message(F.text.casefold().in_({"/показать_токены", "показать токены"}))
+async def cmd_tokens_ru2(message: Message) -> None:
+	await cmd_tokens(message)
+
+
+@router.message(F.text.casefold().in_({"/проверить", "проверить"}))
+async def cmd_diagnose_ru2(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/статус", "статус"}))
+async def cmd_diagnose_ru3(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/логи", "логи"}))
+async def cmd_audit_ru2(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().in_({"/история", "история"}))
+async def cmd_audit_ru3(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().in_({"/сайт", "сайт"}))
+async def cmd_web_ru2(message: Message) -> None:
+	await cmd_web(message)
+
+
+@router.message(F.text.casefold().in_({"/ссылка", "ссылка"}))
+async def cmd_web_ru3(message: Message) -> None:
+	await cmd_web(message)
+
+
+@router.message(F.text.casefold().in_({"/мой_id", "мой id", "мой id?"}))
+async def cmd_whoami_ru2(message: Message) -> None:
+	await cmd_whoami(message)
+
+
+@router.message(F.text.casefold().in_({"/кто_я", "кто я", "кто я?"}))
+async def cmd_whoami_ru3(message: Message) -> None:
+	await cmd_whoami(message)
+
+
+@router.message(F.text.casefold().in_({"/информация", "информация"}))
+async def cmd_whoami_ru4(message: Message) -> None:
+	await cmd_whoami(message)
+
+
+# Восстанавливаем недостающие команды
+@router.message(Command("audit"))
+async def cmd_audit(message: Message) -> None:
+	# Формат: /audit [YYYY-MM-DD] [YYYY-MM-DD]
+	text = (message.text or "").strip()
+	parts = text.split()
+	date_from = None
+	date_to = None
+	from datetime import datetime
+	if len(parts) >= 2:
+		try:
+			date_from = datetime.strptime(parts[1], "%Y-%m-%d")
+		except Exception:
+			date_from = None
+	if len(parts) >= 3:
+		try:
+			date_to = datetime.strptime(parts[2], "%Y-%m-%d")
+		except Exception:
+			date_to = None
+	with session_scope() as session:
+		rows = list_audit(session, date_from=date_from, date_to=date_to)
+	if not rows:
+		await message.answer("Журнал пуст за указанный период.")
+		return
+	from datetime import datetime as _dt
+	from pathlib import Path
+	stamp = _dt.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
+	out_path = Path.cwd() / f"audit_{stamp}.xlsx"
+	export_audit_to_excel(rows, out_path)
+	try:
+		await message.answer_document(FSInputFile(path=out_path), caption=f"Журнал: {len(rows)} записей")
+	finally:
+		try:
+			out_path.unlink(missing_ok=True)
+		except Exception:
+			pass
+
+
+# Алиасы для команды аудита с параметрами
+@router.message(F.text.casefold().startswith("журнал "))
+async def cmd_audit_ru_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().startswith("/журнал "))
+async def cmd_audit_ru_slash_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().startswith("логи "))
+async def cmd_audit_ru2_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().startswith("/логи "))
+async def cmd_audit_ru2_slash_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().startswith("история "))
+async def cmd_audit_ru3_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(F.text.casefold().startswith("/история "))
+async def cmd_audit_ru3_slash_with_params(message: Message) -> None:
+	await cmd_audit(message)
+
+
+@router.message(Command("web"))
+async def cmd_web(message: Message) -> None:
+	settings = get_settings()
+	base = settings.web_base_url.strip() if settings.web_base_url else None
+	if not base:
+		# Сформируем локальный URL
+		base = f"http://localhost:{settings.app_port}"
+	await message.answer(f"Веб-интерфейс: {base}/web/")
+
+
+# Алиасы для команды веб-интерфейса
+@router.message(F.text.casefold().in_({"/сайт", "сайт"}))
+async def cmd_web_ru2(message: Message) -> None:
+	await cmd_web(message)
+
+
+@router.message(F.text.casefold().in_({"/ссылка", "ссылка"}))
+async def cmd_web_ru3(message: Message) -> None:
+	await cmd_web(message)
+
+
+@router.message(F.text.casefold().in_({"/браузер", "браузер"}))
+async def cmd_web_ru4(message: Message) -> None:
+	await cmd_web(message)
+
+
+@router.message(Command("edit"))
+async def cmd_edit(message: Message) -> None:
+	# Формат: /edit <id> key=value [key=value ...]
+	text = (message.text or "").strip()
+	parts = text.split(maxsplit=2)
+	if len(parts) < 3:
+		await message.answer("Использование: /edit <id> key=value [key=value ...]. Пример: /edit 7 title=Новый price=120000 location=Москва")
+		return
+	try:
+		listing_id = int(parts[1])
+	except Exception:
+		await message.answer("ID должен быть числом.")
+		return
+	pairs_raw = parts[2]
+	# Разбор key=value, поддержим значения в кавычках
+	import shlex
+	try:
+		tokens = shlex.split(pairs_raw)
+	except Exception:
+		tokens = pairs_raw.split()
+	updates: dict[str, str] = {}
+	for tok in tokens:
+		if "=" not in tok:
+			continue
+		k, v = tok.split("=", 1)
+		k = k.strip().lower()
+		v = v.strip()
+		updates[k] = v
+	if not updates:
+		await message.answer("Нет полей для обновления. Разрешены: title, description, characteristics, quantity, price, location, contact, type")
+		return
+	allowed = {"title", "description", "characteristics", "quantity", "price", "location", "contact", "type"}
+	with session_scope() as session:
+		item = session.get(Listing, listing_id)
+		if not item:
+			await message.answer("Запись не найдена")
+			return
+		changed: list[str] = []
+		if "title" in updates:
+			item.title = updates["title"]
+			changed.append("title")
+		if "description" in updates:
+			item.description = updates["description"]
+			changed.append("description")
+		if "characteristics" in updates:
+			import json as _json
+			try:
+				item.characteristics = _json.loads(updates["characteristics"]) if updates["characteristics"] else None
+			except Exception:
+				await message.answer("characteristics: ожидается JSON")
+				return
+			changed.append("characteristics")
+		if "quantity" in updates:
+			try:
+				item.quantity = int(updates["quantity"]) if updates["quantity"] != "" else None
+			except Exception:
+				await message.answer("quantity: ожидается целое число")
+				return
+			changed.append("quantity")
+		if "price" in updates:
+			from decimal import Decimal as _Dec
+			try:
+				val = updates["price"].replace(" ", "")
+				item.price = _Dec(val) if val != "" else None
+			except Exception:
+				await message.answer("price: ожидается число")
+				return
+			changed.append("price")
+		if "location" in updates:
+			item.location = updates["location"] or None
+			changed.append("location")
+		if "contact" in updates:
+			item.contact = normalize_contact(updates["contact"]) if updates["contact"] else None
+			changed.append("contact")
+		if "type" in updates:
+			item.type = updates["type"] or item.type
+			changed.append("type")
+		# аудит
+		from app.repositories.audit import log_event as _log
+		_log(session, action="update", resource="listing", actor=str(message.from_user.id), payload={"listing_id": item.id, "changed": changed})
+	await message.answer(f"Обновлено #{listing_id}: {', '.join(changed) if changed else 'без изменений'}")
+
+
+# Алиасы для команды редактирования с параметрами
+@router.message(F.text.casefold().startswith("изменить "))
+async def cmd_edit_ru_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().startswith("/изменить "))
+async def cmd_edit_ru_slash_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().startswith("редактировать "))
+async def cmd_edit_ru2_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().startswith("/редактировать "))
+async def cmd_edit_ru2_slash_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().startswith("обновить "))
+async def cmd_edit_ru3_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(F.text.casefold().startswith("/обновить "))
+async def cmd_edit_ru3_slash_with_params(message: Message) -> None:
+	await cmd_edit(message)
+
+
+@router.message(Command("grant"))
+async def cmd_grant(message: Message) -> None:
+	if not _is_admin(message.from_user.id):
+		await message.answer("Команда доступна только администратору.")
+		return
+	# /grant <minutes> — создать токен на N минут (или без срока при 0/пропуске)
+	parts = (message.text or "").strip().split()
+	expire_minutes = None
+	if len(parts) >= 2:
+		try:
+			expire_minutes = int(parts[1])
+		except Exception:
+			expire_minutes = None
+	from datetime import datetime, timedelta
+	expires_at = None
+	if expire_minutes and expire_minutes > 0:
+		expires_at = datetime.now(ZoneInfo("Europe/Moscow")) + timedelta(minutes=expire_minutes)
+	with session_scope() as session:
+		t = access_create(session, expires_at)
+	settings = get_settings()
+	base = settings.web_base_url.strip() if settings.web_base_url else f"http://localhost:{settings.app_port}"
+	await message.answer(f"Токен создан:\n{t.token}\n\nСсылка: {base}/web/?token={t.token}\nИстекает: {t.expires_at or 'без срока'}")
+
+
+# Алиасы для команды выдачи токенов с параметрами
+@router.message(F.text.casefold().startswith("выдать_токен "))
+async def cmd_grant_ru_with_params(message: Message) -> None:
+	await cmd_grant(message)
+
+
+@router.message(F.text.casefold().startswith("/выдать_токен "))
+async def cmd_grant_ru_slash_with_params(message: Message) -> None:
+	await cmd_grant(message)
+
+
+@router.message(F.text.casefold().startswith("создать_токен "))
+async def cmd_grant_ru2_with_params(message: Message) -> None:
+	await cmd_grant(message)
+
+
+@router.message(F.text.casefold().startswith("/создать_токен "))
+async def cmd_grant_ru2_slash_with_params(message: Message) -> None:
+	await cmd_grant(message)
+
+
+@router.message(Command("revoke"))
+async def cmd_revoke(message: Message) -> None:
+	if not _is_admin(message.from_user.id):
+		await message.answer("Команда доступна только администратору.")
+		return
+	# /revoke <token>
+	parts = (message.text or "").strip().split(maxsplit=1)
+	if len(parts) < 2:
+		await message.answer("Использование: /revoke <token>")
+		return
+	value = parts[1].strip()
+	with session_scope() as session:
+		ok = access_revoke(session, value)
+	await message.answer("Отозвано" if ok else "Токен не найден")
+
+
+# Алиасы для команды отзыва токенов с параметрами
+@router.message(F.text.casefold().startswith("отозвать_токен "))
+async def cmd_revoke_ru_with_params(message: Message) -> None:
+	await cmd_revoke(message)
+
+
+@router.message(F.text.casefold().startswith("/отозвать_токен "))
+async def cmd_revoke_ru_slash_with_params(message: Message) -> None:
+	await cmd_revoke(message)
+
+
+@router.message(F.text.casefold().startswith("убрать_токен "))
+async def cmd_revoke_ru2_with_params(message: Message) -> None:
+	await cmd_revoke(message)
+
+
+@router.message(F.text.casefold().startswith("/убрать_токен "))
+async def cmd_revoke_ru2_slash_with_params(message: Message) -> None:
+	await cmd_revoke(message)
+
+
+# Алиасы для команды добавления с параметрами
+@router.message(F.text.casefold().startswith("добавить "))
+async def cmd_add_ru_with_params(message: Message) -> None:
+	await cmd_add(message)
+
+
+@router.message(F.text.casefold().startswith("/добавить "))
+async def cmd_add_ru_slash_with_params(message: Message) -> None:
+	await cmd_add(message)
+
+
+# Добавляем недостающие команды
 @router.message(Command("add"))
 async def cmd_add(message: Message) -> None:
 	text = (message.text or "").strip()
@@ -286,6 +705,440 @@ async def cmd_attach(message: Message) -> None:
 	await message.answer("Ок, пришлите фото сообщением(ями). Когда закончите — отправьте любую команду.")
 
 
+# Алиасы для команды прикрепления фото с параметрами
+@router.message(F.text.casefold().startswith("прикрепить "))
+async def cmd_attach_ru_with_params(message: Message) -> None:
+	await cmd_attach(message)
+
+
+@router.message(F.text.casefold().startswith("/прикрепить "))
+async def cmd_attach_ru_slash_with_params(message: Message) -> None:
+	await cmd_attach(message)
+
+
+@router.message(Command("list"))
+async def cmd_list(message: Message) -> None:
+	limit = 10
+	with session_scope() as session:
+		items = list_recent_listings(session, limit=limit)
+	if not items:
+		await message.answer("Записей пока нет.")
+		return
+	lines = ["Последние записи:"]
+	for it in items:
+		lines.append(f"#{it.id}: {it.title} | {it.type} | {it.location or '-'} | {it.price or '-'}")
+	await message.answer("\n".join(lines))
+
+
+# Алиасы для команды списка
+@router.message(F.text.casefold().in_({"/список", "список"}))
+async def cmd_list_ru(message: Message) -> None:
+	await cmd_list(message)
+
+
+@router.message(F.text.casefold().in_({"/показать", "показать"}))
+async def cmd_list_ru2(message: Message) -> None:
+	await cmd_list(message)
+
+
+@router.message(F.text.casefold().in_({"/записи", "записи"}))
+async def cmd_list_ru3(message: Message) -> None:
+	await cmd_list(message)
+
+
+@router.message(Command("delete"))
+async def cmd_delete(message: Message) -> None:
+	text = (message.text or "").strip()
+	parts = text.split(maxsplit=1)
+	if len(parts) < 2:
+		await message.answer("Использование: /удалить <id>")
+		return
+	try:
+		listing_id = int(parts[1])
+	except Exception:
+		await message.answer("ID должен быть числом.")
+		return
+	with session_scope() as session:
+		ok = delete_listing_by_id(session, listing_id)
+		if ok:
+			log_event(session, action="delete", resource="listing", actor=str(message.from_user.id), payload={"listing_id": listing_id})
+	logger.info("listing_deleted", listing_id=listing_id, deleted=ok)
+	await message.answer("Удалено" if ok else "Запись не найдена")
+
+
+# Алиасы для команды удаления с параметрами
+@router.message(F.text.casefold().startswith("удалить "))
+async def cmd_delete_ru_with_params(message: Message) -> None:
+	await cmd_delete(message)
+
+
+@router.message(F.text.casefold().startswith("/удалить "))
+async def cmd_delete_ru_slash_with_params(message: Message) -> None:
+	await cmd_delete(message)
+
+
+@router.message(Command("export"))
+async def cmd_export(message: Message) -> None:
+	text = (message.text or "").strip()
+	parts = text.split()
+	city = None
+	listing_type = None
+	price_min = None
+	price_max = None
+	if len(parts) >= 2:
+		city = parts[1] if parts[1] != '-' else None
+	if len(parts) >= 3:
+		listing_type = parts[2] if parts[2] in {"sale", "demand", "contract"} else None
+	if len(parts) >= 4:
+		try:
+			price_min = Decimal(parts[3])
+		except Exception:
+			price_min = None
+	if len(parts) >= 5:
+		try:
+			price_max = Decimal(parts[4])
+		except Exception:
+			price_max = None
+
+	with session_scope() as session:
+		items = get_listings_filtered(session, city=city, listing_type=listing_type, price_min=price_min, price_max=price_max)
+		ids = [it.id for it in items]
+		photos_map = {}
+		if ids:
+			for p in session.query(Photo).filter(Photo.listing_id.in_(ids)).all():
+				photos_map.setdefault(p.listing_id, []).append(p.url)
+	if not items:
+		await message.answer("Нет данных по заданным фильтрам.")
+		return
+	stamp = datetime.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
+	filename = f"export_{stamp}.xlsx"
+	out_path = Path.cwd() / filename
+	logger.info("export_started", count=len(items), city=city, type=listing_type, price_min=str(price_min) if price_min else None, price_max=str(price_max) if price_max else None)
+	export_listings_to_excel(items, out_path, listing_id_to_photos=photos_map)
+	try:
+		await message.answer_document(FSInputFile(path=out_path), caption=f"Экспорт: {len(items)} записей")
+	finally:
+		try:
+			out_path.unlink(missing_ok=True)
+			logger.info("export_file_deleted", path=str(out_path))
+		except Exception as exc:
+			logger.warning("export_file_delete_failed", path=str(out_path), error=str(exc))
+
+
+# Алиасы для команды экспорта с параметрами
+@router.message(F.text.casefold().startswith("экспорт "))
+async def cmd_export_ru_with_params(message: Message) -> None:
+	await cmd_export(message)
+
+
+@router.message(F.text.casefold().startswith("/экспорт "))
+async def cmd_export_ru_slash_with_params(message: Message) -> None:
+	await cmd_export(message)
+
+
+@router.message(Command("matches"))
+async def cmd_matches(message: Message) -> None:
+    # Формат: /matches [порог] [w_title] [w_char] [w_loc] [w_price] [abs] [pct] [fuzzy]
+    # Русские алиасы перехватываются ниже
+    parts = (message.text or "").strip().split()
+    def _f(i: int, default: float | None) -> float | None:
+        try:
+            return float(parts[i].replace(",", ".")) if len(parts) > i else default
+        except Exception:
+            return default
+    threshold = _f(1, 0.45) or 0.45
+    w_title = _f(2, 0.60) or 0.60
+    w_char = _f(3, 0.20) or 0.20
+    w_loc = _f(4, 0.15) or 0.15
+    w_price = _f(5, 0.05) or 0.05
+    abs_tol = _f(6, None)
+    pct_tol = _f(7, None)
+    fuzzy_thr = _f(8, 0.60) or 0.60
+
+    from app.services.matching import group_listings, find_matches
+    with session_scope() as session:
+        items = get_all_listings(session)
+    demands, sales = group_listings(items)
+    from decimal import Decimal as _Dec
+    pairs = find_matches(
+        demands,
+        sales,
+        threshold=threshold,
+        w_title=w_title,
+        w_char=w_char,
+        w_loc=w_loc,
+        w_price=w_price,
+        price_tolerance_abs=_Dec(abs_tol) if abs_tol is not None else None,
+        price_tolerance_pct=pct_tol,
+        fuzzy_token_threshold=fuzzy_thr,
+    )
+    if not pairs:
+        await message.answer("Совпадений не найдено по заданным параметрам.")
+        return
+    from datetime import datetime as _dt
+    from pathlib import Path as _Path
+    rows = []
+    for p in pairs:
+        rows.append({
+            "demand_id": p.Demand.id,
+            "demand_title": p.Demand.title,
+            "demand_location": p.Demand.location,
+            "demand_price": float(p.Demand.price) if p.Demand.price is not None else None,
+            "demand_contact": p.Demand.contact,
+            "sale_id": p.Sale.id,
+            "sale_title": p.Sale.title,
+            "sale_location": p.Sale.location,
+            "sale_price": float(p.Sale.price) if p.Sale.price is not None else None,
+            "sale_contact": p.Sale.contact,
+            "score": round(p.score, 3),
+        })
+    out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Europe/Moscow')).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    export_matches_to_excel(rows, out)
+    try:
+        await message.answer_document(FSInputFile(path=out), caption=f"Совпадения: {len(rows)} пар")
+    finally:
+        try:
+            out.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
+# Алиасы для команды совпадений с параметрами
+@router.message(F.text.casefold().startswith("совпадения "))
+async def cmd_matches_ru_with_params(message: Message) -> None:
+    await cmd_matches(message)
+
+
+@router.message(F.text.casefold().startswith("/совпадения "))
+async def cmd_matches_ru_slash_with_params(message: Message) -> None:
+    await cmd_matches(message)
+
+
+@router.message(Command("remind"))
+async def cmd_remind(message: Message) -> None:
+	text = (message.text or "").strip()
+	parts = text.split(maxsplit=2)
+	if len(parts) < 2:
+		await message.answer("Использование: /напомнить <дата время> <текст>")
+		return
+	# Отделим дату+время от текста гибко
+	tokens = text.split()
+	if len(tokens) < 2:
+		await message.answer("Использование: /напомнить <дата время> <текст>")
+		return
+	# Сценарии: HH:MM | dd.mm HH:MM | dd.mm.yy HH:MM | YYYY-MM-DD HH:MM | YYYY-MM-DDTHH:MM
+	def parse_when(tokens: list[str]) -> tuple[datetime | None, int]:
+		# Возвращает (when, consumed_tokens_after_command)
+		from app.config import get_settings as _get_settings3
+		from zoneinfo import ZoneInfo as _ZI3
+		tz = _ZI3(_get_settings3().timezone)
+		now = datetime.now(tz)
+		# 1) HH:MM
+		m = re.fullmatch(r"(\d{1,2}):(\d{2})", tokens[1]) if len(tokens) >= 2 else None
+		if m and len(tokens) >= 3:  # требуется ещё хотя бы одно слово текста после времени
+			h, mm = int(m.group(1)), int(m.group(2))
+			try:
+				return datetime(now.year, now.month, now.day, h, mm), 1
+			except Exception:
+				return None, 0
+		# 2) dd.mm HH:MM
+		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
+			d, mo = map(int, tokens[1].split("."))
+			h, mm = map(int, tokens[2].split(":"))
+			try:
+				return datetime(now.year, mo, d, h, mm), 2
+			except Exception:
+				return None, 0
+		# 3) dd.mm.yy HH:MM
+		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
+			d, mo, yy = tokens[1].split(".")
+			d, mo, yy = int(d), int(mo), int(yy)
+			yyyy = 2000 + yy
+			h, mm = map(int, tokens[2].split(":"))
+			try:
+				return datetime(yyyy, mo, d, h, mm), 2
+			except Exception:
+				return None, 0
+		# 4) YYYY-MM-DDTHH:MM | YYYY-MM-DD HH:MM (одно токен-значение)
+		if len(tokens) >= 2:
+			cand = tokens[1].replace("T", " ")
+			try:
+				when = datetime.strptime(cand, "%Y-%m-%d %H:%M")
+				return when, 1
+			except Exception:
+				pass
+		return None, 0
+
+	when, consumed = parse_when(tokens)
+	if when is None or consumed == 0:
+		await message.answer("Неверный формат даты/времени. Примеры: /напомнить 21.08 20:19 текст | /напомнить 21.08.25 20:19 текст | /напомнить 20:19 текст")
+		return
+	# Остальной текст после потребленных токенов (учитываем, что tokens[0] = /напомнить)
+	msg_tokens = tokens[1 + consumed:]
+	msg_text = " ".join(msg_tokens).strip()
+	if not msg_text:
+		await message.answer("Добавьте текст напоминания после даты и времени")
+		return
+	with session_scope() as session:
+		rem = create_reminder(session, text=msg_text, remind_at=when, user_id=message.from_user.id)
+	await message.answer(f"Напоминание создано: id={rem.id}, на {when.strftime('%Y-%m-%d %H:%M')}")
+
+
+# Алиасы для команды напоминаний с параметрами
+@router.message(F.text.casefold().startswith("напомнить "))
+async def cmd_remind_ru_with_params(message: Message) -> None:
+	await cmd_remind(message)
+
+
+@router.message(F.text.casefold().startswith("/напомнить "))
+async def cmd_remind_ru_slash_with_params(message: Message) -> None:
+	await cmd_remind(message)
+
+
+@router.message(Command("reminders"))
+async def cmd_reminders(message: Message) -> None:
+	with session_scope() as session:
+		items = list_active_reminders(session)
+	if not items:
+		await message.answer("Активных напоминаний нет.")
+		return
+	lines = ["Активные напоминания:"]
+	for r in items:
+		lines.append(f"#{r.id}: {r.text} — {r.remind_at}")
+	await message.answer("\n".join(lines))
+
+
+# Алиасы для команды напоминаний
+@router.message(F.text.casefold().in_({"/напоминания", "напоминания"}))
+async def cmd_reminders_ru(message: Message) -> None:
+	await cmd_reminders(message)
+
+
+@router.message(F.text.casefold().in_({"/мои_напоминания", "мои напоминания"}))
+async def cmd_reminders_ru2(message: Message) -> None:
+	await cmd_reminders(message)
+
+
+@router.message(F.text.casefold().in_({"/активные_напоминания", "активные напоминания"}))
+async def cmd_reminders_ru3(message: Message) -> None:
+	await cmd_reminders(message)
+
+
+@router.message(Command("cancel_reminder"))
+async def cmd_cancel_reminder(message: Message) -> None:
+	text = (message.text or "").strip()
+	parts = text.split(maxsplit=1)
+	if len(parts) < 2:
+		await message.answer("Использование: /отменить_напоминание <id>")
+		return
+	try:
+		rid = int(parts[1])
+	except Exception:
+		await message.answer("ID должен быть числом.")
+		return
+	with session_scope() as session:
+		ok = cancel_reminder(session, rid)
+	await message.answer("Отменено" if ok else "Не найдено или уже отправлено")
+
+
+# Алиасы для команды отмены напоминаний с параметрами
+@router.message(F.text.casefold().startswith("отменить_напоминание "))
+async def cmd_cancel_reminder_ru1_with_params(message: Message) -> None:
+	await cmd_cancel_reminder(message)
+
+
+@router.message(F.text.casefold().startswith("/отменить_напоминание "))
+async def cmd_cancel_reminder_ru1_slash_with_params(message: Message) -> None:
+	await cmd_cancel_reminder(message)
+
+
+@router.message(F.text.casefold().startswith("отмена_напоминания "))
+async def cmd_cancel_reminder_ru2_with_params(message: Message) -> None:
+	await cmd_cancel_reminder(message)
+
+
+@router.message(F.text.casefold().startswith("/отмена_напоминания "))
+async def cmd_cancel_reminder_ru2_slash_with_params(message: Message) -> None:
+	await cmd_cancel_reminder(message)
+
+
+@router.message(Command("diagnose"))
+async def cmd_diagnose(message: Message) -> None:
+	from app.services.diagnostics import run_diagnostics
+	with session_scope() as session:
+		text, issues = run_diagnostics(session)
+	# Телеграм ограничивает длину сообщения ~4К — порежем при необходимости
+	if len(text) > 3500:
+		text = text[:3500] + "\n... (обрезано)"
+	await message.answer(text)
+
+
+# Алиасы для команды диагностики
+@router.message(F.text.casefold().in_({"/диагностика", "диагностика"}))
+async def cmd_diagnose_ru(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/самодиагностика", "самодиагностика"}))
+async def cmd_diagnose_ru2(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/проверить", "проверить"}))
+async def cmd_diagnose_ru3(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/статус", "статус"}))
+async def cmd_diagnose_ru4(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(F.text.casefold().in_({"/здоровье", "здоровье"}))
+async def cmd_diagnose_ru5(message: Message) -> None:
+	await cmd_diagnose(message)
+
+
+@router.message(Command("tokens"))
+async def cmd_tokens(message: Message) -> None:
+	if not _is_admin(message.from_user.id):
+		await message.answer("Команда доступна только администратору.")
+		return
+	with session_scope() as session:
+		items = access_list(session)
+	if not items:
+		await message.answer("Токенов нет")
+		return
+	lines = ["Токены:"]
+	for t in items:
+		lines.append(f"{t.id}. {t.token} — истекает: {t.expires_at or 'без срока'}")
+	await message.answer("\n".join(lines))
+
+
+# Алиасы для команды токенов
+@router.message(F.text.casefold().in_({"/токены", "токены"}))
+async def cmd_tokens_ru(message: Message) -> None:
+	await cmd_tokens(message)
+
+
+@router.message(F.text.casefold().in_({"/показать_токены", "показать токены"}))
+async def cmd_tokens_ru2(message: Message) -> None:
+	await cmd_tokens(message)
+
+
+@router.message(F.text.casefold().in_({"/список_токенов", "список токенов"}))
+async def cmd_tokens_ru3(message: Message) -> None:
+	await cmd_tokens(message)
+
+
+@router.message(Command("whoami"))
+async def cmd_whoami(message: Message) -> None:
+	uid = message.from_user.id
+	uname = message.from_user.username or "-"
+	await message.answer(f"Ваш Telegram ID: {uid}\nUsername: @{uname}")
+
+
+# Обработка фото
 @router.message(F.photo)
 async def on_photo(message: Message) -> None:
 	user_id = message.from_user.id
@@ -516,7 +1369,7 @@ async def ai_fallback(message: Message) -> None:
 					yyyy = 2000 + yy
 					h, mm = map(int, tpart.split(":"))
 					try:
-						when_dt = _dt(yyyy, mo, d, h, mm)
+						when_dt = _dt(now.year, mo, d, h, mm)
 					except Exception:
 						when_dt = None
 				if when_dt is None:
@@ -535,7 +1388,7 @@ async def ai_fallback(message: Message) -> None:
 						if unit.startswith("минут"):
 							when_dt = now + _td2(minutes=n)
 						elif unit.startswith("час"):
-							when_dt = now + _td2(hours=n)
+							when_dt = _td2(hours=n)
 						elif unit.startswith("дн"):
 							when_dt = now + _td2(days=n)
 						elif unit.startswith("недел"):
@@ -600,7 +1453,7 @@ async def ai_fallback(message: Message) -> None:
 						item.location = updates["location"] or None
 						changed.append("location")
 					if "contact" in updates:
-						item.contact = updates["contact"] or None
+						item.contact = normalize_contact(updates["contact"]) if updates["contact"] else None
 						changed.append("contact")
 					if "type" in updates:
 						item.type = updates["type"] or item.type
@@ -724,465 +1577,64 @@ async def ai_fallback(message: Message) -> None:
 		chat_add(session, message.from_user.id, "assistant", "(команда выполнена)")
 
 
-@router.message(Command("list"))
-async def cmd_list(message: Message) -> None:
-	limit = 10
-	with session_scope() as session:
-		items = list_recent_listings(session, limit=limit)
-	if not items:
-		await message.answer("Записей пока нет.")
-		return
-	lines = ["Последние записи:"]
-	for it in items:
-		lines.append(f"#{it.id}: {it.title} | {it.type} | {it.location or '-'} | {it.price or '-'}")
-	await message.answer("\n".join(lines))
+# Алиасы для команды идентификации
+@router.message(F.text.casefold().in_({"/ктоя", "ктоя", "кто я"}))
+async def cmd_whoami_ru(message: Message) -> None:
+	await cmd_whoami(message)
 
 
-@router.message(Command("delete"))
-async def cmd_delete(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=1)
-	if len(parts) < 2:
-		await message.answer("Использование: /удалить <id>")
-		return
-	try:
-		listing_id = int(parts[1])
-	except Exception:
-		await message.answer("ID должен быть числом.")
-		return
-	with session_scope() as session:
-		ok = delete_listing_by_id(session, listing_id)
-		if ok:
-			log_event(session, action="delete", resource="listing", actor=str(message.from_user.id), payload={"listing_id": listing_id})
-	logger.info("listing_deleted", listing_id=listing_id, deleted=ok)
-	await message.answer("Удалено" if ok else "Запись не найдена")
+@router.message(F.text.casefold().in_({"/мой_id", "мой id", "мой id?"}))
+async def cmd_whoami_ru2(message: Message) -> None:
+	await cmd_whoami(message)
 
 
-@router.message(Command("export"))
-async def cmd_export(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split()
-	city = None
-	listing_type = None
-	price_min = None
-	price_max = None
-	if len(parts) >= 2:
-		city = parts[1] if parts[1] != '-' else None
-	if len(parts) >= 3:
-		listing_type = parts[2] if parts[2] in {"sale", "demand", "contract"} else None
-	if len(parts) >= 4:
-		try:
-			price_min = Decimal(parts[3])
-		except Exception:
-			price_min = None
-	if len(parts) >= 5:
-		try:
-			price_max = Decimal(parts[4])
-		except Exception:
-			price_max = None
-
-	with session_scope() as session:
-		items = get_listings_filtered(session, city=city, listing_type=listing_type, price_min=price_min, price_max=price_max)
-		ids = [it.id for it in items]
-		photos_map = {}
-		if ids:
-			for p in session.query(Photo).filter(Photo.listing_id.in_(ids)).all():
-				photos_map.setdefault(p.listing_id, []).append(p.url)
-	if not items:
-		await message.answer("Нет данных по заданным фильтрам.")
-		return
-	stamp = datetime.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
-	filename = f"export_{stamp}.xlsx"
-	out_path = Path.cwd() / filename
-	logger.info("export_started", count=len(items), city=city, type=listing_type, price_min=str(price_min) if price_min else None, price_max=str(price_max) if price_max else None)
-	export_listings_to_excel(items, out_path, listing_id_to_photos=photos_map)
-	try:
-		await message.answer_document(FSInputFile(path=out_path), caption=f"Экспорт: {len(items)} записей")
-	finally:
-		try:
-			out_path.unlink(missing_ok=True)
-			logger.info("export_file_deleted", path=str(out_path))
-		except Exception as exc:
-			logger.warning("export_file_delete_failed", path=str(out_path), error=str(exc))
+@router.message(F.text.casefold().in_({"/кто_я", "кто я", "кто я?"}))
+async def cmd_whoami_ru3(message: Message) -> None:
+	await cmd_whoami(message)
 
 
-# Совпадения: расчёт и Excel-отчёт
-@router.message(Command("matches"))
-async def cmd_matches(message: Message) -> None:
-    # Формат: /matches [порог] [w_title] [w_char] [w_loc] [w_price] [abs] [pct] [fuzzy]
-    # Русские алиасы перехватываются ниже
-    parts = (message.text or "").strip().split()
-    def _f(i: int, default: float | None) -> float | None:
-        try:
-            return float(parts[i].replace(",", ".")) if len(parts) > i else default
-        except Exception:
-            return default
-    threshold = _f(1, 0.45) or 0.45
-    w_title = _f(2, 0.60) or 0.60
-    w_char = _f(3, 0.20) or 0.20
-    w_loc = _f(4, 0.15) or 0.15
-    w_price = _f(5, 0.05) or 0.05
-    abs_tol = _f(6, None)
-    pct_tol = _f(7, None)
-    fuzzy_thr = _f(8, 0.60) or 0.60
-
-    from app.services.matching import group_listings, find_matches
-    with session_scope() as session:
-        items = get_all_listings(session)
-    demands, sales = group_listings(items)
-    from decimal import Decimal as _Dec
-    pairs = find_matches(
-        demands,
-        sales,
-        threshold=threshold,
-        w_title=w_title,
-        w_char=w_char,
-        w_loc=w_loc,
-        w_price=w_price,
-        price_tolerance_abs=_Dec(abs_tol) if abs_tol is not None else None,
-        price_tolerance_pct=pct_tol,
-        fuzzy_token_threshold=fuzzy_thr,
-    )
-    if not pairs:
-        await message.answer("Совпадений не найдено по заданным параметрам.")
-        return
-    from datetime import datetime as _dt
-    from pathlib import Path as _Path
-    rows = []
-    for p in pairs:
-        rows.append({
-            "demand_id": p.Demand.id,
-            "demand_title": p.Demand.title,
-            "demand_location": p.Demand.location,
-            "demand_price": float(p.Demand.price) if p.Demand.price is not None else None,
-            "demand_contact": p.Demand.contact,
-            "sale_id": p.Sale.id,
-            "sale_title": p.Sale.title,
-            "sale_location": p.Sale.location,
-            "sale_price": float(p.Sale.price) if p.Sale.price is not None else None,
-            "sale_contact": p.Sale.contact,
-            "score": round(p.score, 3),
-        })
-    out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Europe/Moscow')).strftime('%Y%m%d_%H%M%S')}.xlsx"
-    export_matches_to_excel(rows, out)
-    try:
-        await message.answer_document(FSInputFile(path=out), caption=f"Совпадения: {len(rows)} пар")
-    finally:
-        try:
-            out.unlink(missing_ok=True)
-        except Exception:
-            pass
+@router.message(F.text.casefold().in_({"/информация", "информация"}))
+async def cmd_whoami_ru4(message: Message) -> None:
+	await cmd_whoami(message)
 
 
-# Русские алиасы команды совпадений
-@router.message(F.text.casefold().in_({"/совпадения", "совпадения"}))
-async def cmd_matches_ru(message: Message) -> None:
-    await cmd_matches(message)
-
-@router.message(Command("remind"))
-async def cmd_remind(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=2)
-	if len(parts) < 2:
-		await message.answer("Использование: /напомнить <дата время> <текст>")
-		return
-	# Отделим дату+время от текста гибко
-	tokens = text.split()
-	if len(tokens) < 2:
-		await message.answer("Использование: /напомнить <дата время> <текст>")
-		return
-	# Сценарии: HH:MM | dd.mm HH:MM | dd.mm.yy HH:MM | YYYY-MM-DD HH:MM | YYYY-MM-DDTHH:MM
-	def parse_when(tokens: list[str]) -> tuple[datetime | None, int]:
-		# Возвращает (when, consumed_tokens_after_command)
-		from app.config import get_settings as _get_settings3
-		from zoneinfo import ZoneInfo as _ZI3
-		tz = _ZI3(_get_settings3().timezone)
-		now = datetime.now(tz)
-		# 1) HH:MM
-		m = re.fullmatch(r"(\d{1,2}):(\d{2})", tokens[1]) if len(tokens) >= 2 else None
-		if m and len(tokens) >= 3:  # требуется ещё хотя бы одно слово текста после времени
-			h, mm = int(m.group(1)), int(m.group(2))
-			try:
-				return datetime(now.year, now.month, now.day, h, mm), 1
-			except Exception:
-				return None, 0
-		# 2) dd.mm HH:MM
-		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
-			d, mo = map(int, tokens[1].split("."))
-			h, mm = map(int, tokens[2].split(":"))
-			try:
-				return datetime(now.year, mo, d, h, mm), 2
-			except Exception:
-				return None, 0
-		# 3) dd.mm.yy HH:MM
-		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
-			d, mo, yy = tokens[1].split(".")
-			d, mo, yy = int(d), int(mo), int(yy)
-			yyyy = 2000 + yy
-			h, mm = map(int, tokens[2].split(":"))
-			try:
-				return datetime(yyyy, mo, d, h, mm), 2
-			except Exception:
-				return None, 0
-		# 4) YYYY-MM-DDTHH:MM | YYYY-MM-DD HH:MM (одно токен-значение)
-		if len(tokens) >= 2:
-			cand = tokens[1].replace("T", " ")
-			try:
-				when = datetime.strptime(cand, "%Y-%m-%d %H:%M")
-				return when, 1
-			except Exception:
-				pass
-		return None, 0
-
-	when, consumed = parse_when(tokens)
-	if when is None or consumed == 0:
-		await message.answer("Неверный формат даты/времени. Примеры: /напомнить 21.08 20:19 текст | /напомнить 21.08.25 20:19 текст | /напомнить 20:19 текст")
-		return
-	# Остальной текст после потребленных токенов (учитываем, что tokens[0] = /напомнить)
-	msg_tokens = tokens[1 + consumed:]
-	msg_text = " ".join(msg_tokens).strip()
-	if not msg_text:
-		await message.answer("Добавьте текст напоминания после даты и времени")
-		return
-	with session_scope() as session:
-		rem = create_reminder(session, text=msg_text, remind_at=when, user_id=message.from_user.id)
-	await message.answer(f"Напоминание создано: id={rem.id}, на {when.strftime('%Y-%m-%d %H:%M')}")
+# Алиасы для команды выдачи токенов с параметрами
+@router.message(F.text.casefold().startswith("выдать_токен "))
+async def cmd_grant_ru_with_params(message: Message) -> None:
+	await cmd_grant(message)
 
 
-@router.message(Command("reminders"))
-async def cmd_reminders(message: Message) -> None:
-	with session_scope() as session:
-		items = list_active_reminders(session)
-	if not items:
-		await message.answer("Активных напоминаний нет.")
-		return
-	lines = ["Активные напоминания:"]
-	for r in items:
-		lines.append(f"#{r.id}: {r.text} — {r.remind_at}")
-	await message.answer("\n".join(lines))
+@router.message(F.text.casefold().startswith("/выдать_токен "))
+async def cmd_grant_ru_slash_with_params(message: Message) -> None:
+	await cmd_grant(message)
 
 
-@router.message(Command("cancel_reminder"))
-async def cmd_cancel_reminder(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=1)
-	if len(parts) < 2:
-		await message.answer("Использование: /отменить_напоминание <id>")
-		return
-	try:
-		rid = int(parts[1])
-	except Exception:
-		await message.answer("ID должен быть числом.")
-		return
-	with session_scope() as session:
-		ok = cancel_reminder(session, rid)
-	await message.answer("Отменено" if ok else "Не найдено или уже отправлено")
+@router.message(F.text.casefold().startswith("создать_токен "))
+async def cmd_grant_ru2_with_params(message: Message) -> None:
+	await cmd_grant(message)
 
 
-@router.message(Command("diagnose"))
-async def cmd_diagnose(message: Message) -> None:
-	from app.services.diagnostics import run_diagnostics
-	with session_scope() as session:
-		text, issues = run_diagnostics(session)
-	# Телеграм ограничивает длину сообщения ~4К — порежем при необходимости
-	if len(text) > 3500:
-		text = text[:3500] + "\n... (обрезано)"
-	await message.answer(text)
+@router.message(F.text.casefold().startswith("/создать_токен "))
+async def cmd_grant_ru2_slash_with_params(message: Message) -> None:
+	await cmd_grant(message)
 
 
-@router.message(F.text.casefold().in_({"/диагностика", "диагностика"}))
-async def cmd_diagnose_ru(message: Message) -> None:
-	await cmd_diagnose(message)
+# Алиасы для команды отзыва токенов с параметрами
+@router.message(F.text.casefold().startswith("отозвать_токен "))
+async def cmd_revoke_ru_with_params(message: Message) -> None:
+	await cmd_revoke(message)
 
 
-@router.message(Command("audit"))
-async def cmd_audit(message: Message) -> None:
-	# Формат: /audit [YYYY-MM-DD] [YYYY-MM-DD]
-	text = (message.text or "").strip()
-	parts = text.split()
-	date_from = None
-	date_to = None
-	from datetime import datetime
-	if len(parts) >= 2:
-		try:
-			date_from = datetime.strptime(parts[1], "%Y-%m-%d")
-		except Exception:
-			date_from = None
-	if len(parts) >= 3:
-		try:
-			date_to = datetime.strptime(parts[2], "%Y-%m-%d")
-		except Exception:
-			date_to = None
-	with session_scope() as session:
-		rows = list_audit(session, date_from=date_from, date_to=date_to)
-	if not rows:
-		await message.answer("Журнал пуст за указанный период.")
-		return
-	from datetime import datetime as _dt
-	from pathlib import Path
-	stamp = _dt.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
-	out_path = Path.cwd() / f"audit_{stamp}.xlsx"
-	export_audit_to_excel(rows, out_path)
-	try:
-		await message.answer_document(FSInputFile(path=out_path), caption=f"Журнал: {len(rows)} записей")
-	finally:
-		try:
-			out_path.unlink(missing_ok=True)
-		except Exception:
-			pass
+@router.message(F.text.casefold().startswith("/отозвать_токен "))
+async def cmd_revoke_ru_slash_with_params(message: Message) -> None:
+	await cmd_revoke(message)
 
 
-@router.message(Command("web"))
-async def cmd_web(message: Message) -> None:
-	settings = get_settings()
-	base = settings.web_base_url.strip() if settings.web_base_url else None
-	if not base:
-		# Сформируем локальный URL
-		base = f"http://localhost:{settings.app_port}"
-	await message.answer(f"Веб-интерфейс: {base}/web/")
+@router.message(F.text.casefold().startswith("убрать_токен "))
+async def cmd_revoke_ru2_with_params(message: Message) -> None:
+	await cmd_revoke(message)
 
 
-@router.message(Command("whoami"))
-async def cmd_whoami(message: Message) -> None:
-	uid = message.from_user.id
-	uname = message.from_user.username or "-"
-	await message.answer(f"Ваш Telegram ID: {uid}\nUsername: @{uname}")
-
-
-@router.message(Command("edit"))
-async def cmd_edit(message: Message) -> None:
-	# Формат: /edit <id> key=value [key=value ...]
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=2)
-	if len(parts) < 3:
-		await message.answer("Использование: /edit <id> key=value [key=value ...]. Пример: /edit 7 title=Новый price=120000 location=Москва")
-		return
-	try:
-		listing_id = int(parts[1])
-	except Exception:
-		await message.answer("ID должен быть числом.")
-		return
-	pairs_raw = parts[2]
-	# Разбор key=value, поддержим значения в кавычках
-	import shlex
-	try:
-		tokens = shlex.split(pairs_raw)
-	except Exception:
-		tokens = pairs_raw.split()
-	updates: dict[str, str] = {}
-	for tok in tokens:
-		if "=" not in tok:
-			continue
-		k, v = tok.split("=", 1)
-		k = k.strip().lower()
-		v = v.strip()
-		updates[k] = v
-	if not updates:
-		await message.answer("Нет полей для обновления. Разрешены: title, description, characteristics, quantity, price, location, contact, type")
-		return
-	allowed = {"title", "description", "characteristics", "quantity", "price", "location", "contact", "type"}
-	with session_scope() as session:
-		item = session.get(Listing, listing_id)
-		if not item:
-			await message.answer("Запись не найдена")
-			return
-		changed: list[str] = []
-		if "title" in updates:
-			item.title = updates["title"]
-			changed.append("title")
-		if "description" in updates:
-			item.description = updates["description"]
-			changed.append("description")
-		if "characteristics" in updates:
-			import json as _json
-			try:
-				item.characteristics = _json.loads(updates["characteristics"]) if updates["characteristics"] else None
-			except Exception:
-				await message.answer("characteristics: ожидается JSON")
-				return
-			changed.append("characteristics")
-		if "quantity" in updates:
-			try:
-				item.quantity = int(updates["quantity"]) if updates["quantity"] != "" else None
-			except Exception:
-				await message.answer("quantity: ожидается целое число")
-				return
-			changed.append("quantity")
-		if "price" in updates:
-			from decimal import Decimal as _Dec
-			try:
-				val = updates["price"].replace(" ", "")
-				item.price = _Dec(val) if val != "" else None
-			except Exception:
-				await message.answer("price: ожидается число")
-				return
-			changed.append("price")
-		if "location" in updates:
-			item.location = updates["location"] or None
-			changed.append("location")
-		if "contact" in updates:
-			item.contact = normalize_contact(updates["contact"]) if updates["contact"] else None
-			changed.append("contact")
-		if "type" in updates:
-			item.type = updates["type"] or item.type
-			changed.append("type")
-		# аудит
-		from app.repositories.audit import log_event as _log
-		_log(session, action="update", resource="listing", actor=str(message.from_user.id), payload={"listing_id": item.id, "changed": changed})
-	await message.answer(f"Обновлено #{listing_id}: {', '.join(changed) if changed else 'без изменений'}")
-
-
-@router.message(Command("grant"))
-async def cmd_grant(message: Message) -> None:
-	if not _is_admin(message.from_user.id):
-		await message.answer("Команда доступна только администратору.")
-		return
-	# /grant <minutes> — создать токен на N минут (или без срока при 0/пропуске)
-	parts = (message.text or "").strip().split()
-	expire_minutes = None
-	if len(parts) >= 2:
-		try:
-			expire_minutes = int(parts[1])
-		except Exception:
-			expire_minutes = None
-	from datetime import datetime, timedelta
-	expires_at = None
-	if expire_minutes and expire_minutes > 0:
-		expires_at = datetime.now(ZoneInfo("Europe/Moscow")) + timedelta(minutes=expire_minutes)
-	with session_scope() as session:
-		t = access_create(session, expires_at)
-	settings = get_settings()
-	base = settings.web_base_url.strip() if settings.web_base_url else f"http://localhost:{settings.app_port}"
-	await message.answer(f"Токен создан:\n{t.token}\n\nСсылка: {base}/web/?token={t.token}\nИстекает: {t.expires_at or 'без срока'}")
-
-
-@router.message(Command("revoke"))
-async def cmd_revoke(message: Message) -> None:
-	if not _is_admin(message.from_user.id):
-		await message.answer("Команда доступна только администратору.")
-		return
-	# /revoke <token>
-	parts = (message.text or "").strip().split(maxsplit=1)
-	if len(parts) < 2:
-		await message.answer("Использование: /revoke <token>")
-		return
-	value = parts[1].strip()
-	with session_scope() as session:
-		ok = access_revoke(session, value)
-	await message.answer("Отозвано" if ok else "Токен не найден")
-
-
-@router.message(Command("tokens"))
-async def cmd_tokens(message: Message) -> None:
-	if not _is_admin(message.from_user.id):
-		await message.answer("Команда доступна только администратору.")
-		return
-	with session_scope() as session:
-		items = access_list(session)
-	if not items:
-		await message.answer("Токенов нет")
-		return
-	lines = ["Токены:"]
-	for t in items:
-		lines.append(f"{t.id}. {t.token} — истекает: {t.expires_at or 'без срока'}")
-	await message.answer("\n".join(lines))
+@router.message(F.text.casefold().startswith("/убрать_токен "))
+async def cmd_revoke_ru2_slash_with_params(message: Message) -> None:
+	await cmd_revoke(message)
