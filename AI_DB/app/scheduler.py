@@ -32,8 +32,10 @@ async def _send_document(bot: Bot, chat_id: int, filepath: Path, caption: str) -
 
 
 async def daily_matches_job() -> None:
+	logger.info("daily_matches_job_started")
 	settings = get_settings()
 	if not settings.telegram_bot_token or not settings.admin_chat_id:
+		logger.warning("daily_matches_job_skipped", reason="missing_telegram_config", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 		return
 	with session_scope() as session:
 		items: List[Listing] = get_all_listings(session)
@@ -64,6 +66,7 @@ async def daily_matches_job() -> None:
 	caption = f"Найдено совпадений: {len(rows)}"
 	try:
 		await _send_document(bot, settings.admin_chat_id, out_path, caption)
+		logger.info("daily_matches_job_completed", pairs_count=len(rows), sent_to=settings.admin_chat_id)
 	finally:
 		try:
 			out_path.unlink(missing_ok=True)
@@ -73,16 +76,22 @@ async def daily_matches_job() -> None:
 
 
 def weekly_backup_job() -> None:
+	logger.info("weekly_backup_job_started")
 	settings = get_settings()
+	if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password:
+		logger.warning("weekly_backup_job_skipped", reason="missing_smtp_config", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password))
+		return
 	with session_scope() as session:
 		items: List[Listing] = get_all_listings(session)
 	if not items:
+		logger.info("weekly_backup_job_skipped", reason="no_data")
 		return
 	stamp = datetime.now(ZoneInfo(settings.timezone)).strftime('%Y%m%d_%H%M%S')
 	out_path = Path.cwd() / f"backup_{stamp}.xlsx"
 	export_listings_to_excel(items, out_path)
 	try:
 		send_email(subject="Weekly DB backup", body=f"Backup at {stamp}", attachments=[out_path])
+		logger.info("weekly_backup_job_completed", items_count=len(items), sent_to=settings.smtp_to)
 	finally:
 		try:
 			out_path.unlink(missing_ok=True)
@@ -91,7 +100,11 @@ def weekly_backup_job() -> None:
 
 
 def weekly_stats_job() -> None:
+	logger.info("weekly_stats_job_started")
 	settings = get_settings()
+	if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password:
+		logger.warning("weekly_stats_job_skipped", reason="missing_smtp_config", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password))
+		return
 	with session_scope() as session:
 		items: List[Listing] = get_all_listings(session)
 	stamp = datetime.now(ZoneInfo(settings.timezone)).strftime('%Y%m%d_%H%M%S')
@@ -99,6 +112,7 @@ def weekly_stats_job() -> None:
 	export_stats_to_excel(items, out_path)
 	try:
 		send_email(subject="Weekly stats", body=f"Stats at {stamp}", attachments=[out_path])
+		logger.info("weekly_stats_job_completed", items_count=len(items), sent_to=settings.smtp_to)
 	finally:
 		try:
 			out_path.unlink(missing_ok=True)
@@ -186,12 +200,38 @@ def start_scheduler() -> None:
 	settings = get_settings()
 	tz = ZoneInfo(settings.timezone)
 	_scheduler = AsyncIOScheduler(timezone=tz)
+	
+	# Добавляем задачи с логированием
+	logger.info("scheduler_setup_start", timezone=str(tz))
+	
 	_scheduler.add_job(daily_matches_job, trigger='cron', hour=9, minute=0, id='daily_matches')
+	logger.info("scheduler_job_added", job_id='daily_matches', schedule='9:00 daily')
+	
 	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='fri', hour=17, minute=0, id='weekly_backup')
+	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Friday 17:00')
+	
 	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='mon', hour=9, minute=0, id='weekly_stats')
+	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Monday 9:00')
+	
 	_scheduler.add_job(reminders_tick_job, trigger='cron', second='0', id='reminders_tick')
+	logger.info("scheduler_job_added", job_id='reminders_tick', schedule='every second')
+	
 	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=18, minute=0, id='weekly_diagnostics')
+	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 18:00')
+	
 	# Опциональный разовый тест-старт: запускает тестовый отчёт через 1 минуту после старта
 	if os.getenv("TEST_EMAIL_ONCE", "0") == "1":
 		_scheduler.add_job(friday_test_report_job, trigger='date', run_date=datetime.now(tz) + timedelta(minutes=1), id='test_email_report_once', replace_existing=True)
+		logger.info("scheduler_test_job_added", job_id='test_email_report_once', schedule='1 minute from start')
+	
+	# Тест планировщика: запускает все задачи через 2 минуты после старта
+	if os.getenv("TEST_SCHEDULER_ONCE", "0") == "1":
+		test_time = datetime.now(tz) + timedelta(minutes=2)
+		_scheduler.add_job(daily_matches_job, trigger='date', run_date=test_time, id='test_daily_matches', replace_existing=True)
+		_scheduler.add_job(weekly_backup_job, trigger='date', run_date=test_time, id='test_weekly_backup', replace_existing=True)
+		_scheduler.add_job(weekly_stats_job, trigger='date', run_date=test_time, id='test_weekly_stats', replace_existing=True)
+		_scheduler.add_job(weekly_diagnostics_job, trigger='date', run_date=test_time, id='test_weekly_diagnostics', replace_existing=True)
+		logger.info("scheduler_test_jobs_added", test_time=str(test_time))
+	
 	_scheduler.start()
+	logger.info("scheduler_started", job_count=len(_scheduler.get_jobs()), timezone=str(tz))
