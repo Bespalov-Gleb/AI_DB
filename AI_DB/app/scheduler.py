@@ -185,6 +185,25 @@ async def weekly_diagnostics_job() -> None:
 		await bot.session.close()
 
 
+async def test_message_job() -> None:
+	"""Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту"""
+	logger.info("test_message_job_started")
+	settings = get_settings()
+	logger.info("test_message_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
+	if not settings.telegram_bot_token or not settings.admin_chat_id:
+		logger.warning("test_message_job_skipped", reason="missing_telegram_config", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
+		return
+	
+	bot = Bot(token=settings.telegram_bot_token)
+	try:
+		now = datetime.now(ZoneInfo(settings.timezone))
+		message = f"ТЕСТ - {now.strftime('%H:%M:%S')} (UTC+5)"
+		await bot.send_message(chat_id=settings.admin_chat_id, text=message)
+		logger.info("test_message_job_completed", message=message, sent_to=settings.admin_chat_id)
+	finally:
+		await bot.session.close()
+
+
 
 def friday_test_report_job() -> None:
 	settings = get_settings()
@@ -230,6 +249,10 @@ def start_scheduler() -> None:
 	
 	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=18, minute=0, id='weekly_diagnostics')
 	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 18:00')
+	
+	# Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту
+	_scheduler.add_job(test_message_job, trigger='cron', minute='*', id='test_message')
+	logger.info("scheduler_job_added", job_id='test_message', schedule='every minute')
 	
 	# Опциональный разовый тест-старт: запускает тестовый отчёт через 1 минуту после старта
 	if os.getenv("TEST_EMAIL_ONCE", "0") == "1":

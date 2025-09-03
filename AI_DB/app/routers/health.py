@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from sqlalchemy import text
 
 from app.db import session_scope
-from app.scheduler import _scheduler, daily_matches_job, weekly_backup_job, weekly_stats_job, weekly_diagnostics_job
+from app.scheduler import _scheduler, daily_matches_job, weekly_backup_job, weekly_stats_job, weekly_diagnostics_job, test_message_job
 from app.config import get_settings
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -63,6 +63,12 @@ async def test_scheduler_jobs() -> dict:
         results["weekly_diagnostics"] = "completed"
     except Exception as e:
         results["weekly_diagnostics"] = f"error: {str(e)}"
+    
+    try:
+        await test_message_job()
+        results["test_message"] = "completed"
+    except Exception as e:
+        results["test_message"] = f"error: {str(e)}"
     
     # Тестируем Email задачи
     try:
