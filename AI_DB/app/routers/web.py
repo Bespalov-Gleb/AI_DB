@@ -158,9 +158,17 @@ def _normalize_ltype(value: str | None) -> str | None:
     return mapping.get(v)
 
 @router.get("/", response_class=HTMLResponse)
-async def list_view(request: Request, city: Optional[str] = None, ltype: Optional[str] = Query(None, alias="type"), q: Optional[str] = None, fuzzy_token_threshold: float = 0.6, page: int = 1, per_page: int = 0, _=Depends(require_web_access)):
+async def list_view(request: Request, city: Optional[str] = None, ltype: Optional[str] = Query(None, alias="type"), q: Optional[str] = None, fuzzy_token_threshold: float = 0.6, page: int = 1, per_page: Optional[str] = Query("0", alias="per_page"), _=Depends(require_web_access)):
 	page = max(1, page)
-	per_page = max(1, per_page)  # Убираем ограничение в 50 записей
+	
+	# Обрабатываем per_page: пустая строка или "0" означает "показать все"
+	try:
+		if per_page is None or per_page.strip() == "" or per_page == "0":
+			per_page_int = 0
+		else:
+			per_page_int = int(per_page)
+	except (ValueError, AttributeError):
+		per_page_int = 0
 	from app.services.matching import title_similarity
 	with session_scope() as session:
 		query = session.query(Listing)
@@ -189,20 +197,21 @@ async def list_view(request: Request, city: Optional[str] = None, ltype: Optiona
 	page = max(1, page)
 	
 	# Если per_page не указан или 0, показываем все записи
-	if not per_page or per_page <= 0:
-		per_page = total
+	if not per_page_int or per_page_int <= 0:
+		per_page_int = total
 		pages = 1
 		start = 0
 		end = total
 	else:
-		per_page = max(1, per_page)  # Убираем ограничение в 50 записей
-		pages = ceil(total / per_page) if per_page else 1
-		start = (page - 1) * per_page
-		end = start + per_page
+		per_page_int = max(1, per_page_int)  # Убираем ограничение в 50 записей
+		pages = ceil(total / per_page_int) if per_page_int else 1
+		start = (page - 1) * per_page_int
+		end = start + per_page_int
 	
 	items = items[start:end]
-	# в поле ввода вернём исходное значение пользователя
-	return templates.TemplateResponse("list.html", {"request": request, "items": items, "featured": featured, "total": total, "page": page, "pages": pages, "per_page": per_page, "city": city, "ltype": ltype, "q": q, "fuzzy_token_threshold": fuzzy_token_threshold})
+	# в поле ввода вернём исходное значение пользователя (пустая строка для "показать все")
+	per_page_display = "" if per_page_int == total else str(per_page_int)
+	return templates.TemplateResponse("list.html", {"request": request, "items": items, "featured": featured, "total": total, "page": page, "pages": pages, "per_page": per_page_display, "city": city, "ltype": ltype, "q": q, "fuzzy_token_threshold": fuzzy_token_threshold})
 
 
 @router.get("/detail/{listing_id}", response_class=HTMLResponse)

@@ -39,7 +39,9 @@
 		</div>
 
 		<p class="muted">
-			{% if per_page > 0 and per_page < total %}
+			{% if per_page == '' or per_page == '0' or per_page == 0 %}
+				Показаны все записи: {{ total }}
+			{% elif per_page|int > 0 and per_page|int < total %}
 				Показано: {{ items|length }} из {{ total }} записей
 			{% else %}
 				Всего: {{ total }} записей
