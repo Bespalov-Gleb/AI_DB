@@ -379,7 +379,7 @@ async def cmd_audit(message: Message) -> None:
 		return
 	from datetime import datetime as _dt
 	from pathlib import Path
-			stamp = _dt.now(ZoneInfo("Asia/Tashkent")).strftime("%Y%m%d_%H%M%S")
+	stamp = _dt.now(ZoneInfo("Asia/Tashkent")).strftime("%Y%m%d_%H%M%S")
 	out_path = Path.cwd() / f"audit_{stamp}.xlsx"
 	export_audit_to_excel(rows, out_path)
 	try:
@@ -892,7 +892,7 @@ async def cmd_matches(message: Message) -> None:
             "sale_contact": p.Sale.contact,
             "score": round(p.score, 3),
         })
-    	out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Asia/Tashkent')).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Asia/Tashkent')).strftime('%Y%m%d_%H%M%S')}.xlsx"
     export_matches_to_excel(rows, out)
     try:
         await message.answer_document(FSInputFile(path=out), caption=f"Совпадения: {len(rows)} пар")
@@ -916,187 +916,187 @@ async def cmd_matches_ru_slash_with_params(message: Message) -> None:
 
 @router.message(Command("remind"))
 async def cmd_remind(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=2)
-	if len(parts) < 2:
-		await message.answer("Использование: /напомнить <дата время> <текст>")
-		return
-	# Отделим дату+время от текста гибко
-	tokens = text.split()
-	if len(tokens) < 2:
-		await message.answer("Использование: /напомнить <дата время> <текст>")
-		return
-	# Сценарии: HH:MM | dd.mm HH:MM | dd.mm.yy HH:MM | YYYY-MM-DD HH:MM | YYYY-MM-DDTHH:MM
-	def parse_when(tokens: list[str]) -> tuple[datetime | None, int]:
-		# Возвращает (when, consumed_tokens_after_command)
-		from app.config import get_settings as _get_settings3
-		from zoneinfo import ZoneInfo as _ZI3
-		tz = _ZI3(_get_settings3().timezone)
-		now = datetime.now(tz)
-		# 1) HH:MM
-		m = re.fullmatch(r"(\d{1,2}):(\d{2})", tokens[1]) if len(tokens) >= 2 else None
-		if m and len(tokens) >= 3:  # требуется ещё хотя бы одно слово текста после времени
-			h, mm = int(m.group(1)), int(m.group(2))
-			try:
-				return datetime(now.year, now.month, now.day, h, mm), 1
-			except Exception:
-				return None, 0
-		# 2) dd.mm HH:MM
-		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
-			d, mo = map(int, tokens[1].split("."))
-			h, mm = map(int, tokens[2].split(":"))
-			try:
-				return datetime(now.year, mo, d, h, mm), 2
-			except Exception:
-				return None, 0
-		# 3) dd.mm.yy HH:MM
-		if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
-			d, mo, yy = tokens[1].split(".")
-			d, mo, yy = int(d), int(mo), int(yy)
-			yyyy = 2000 + yy
-			h, mm = map(int, tokens[2].split(":"))
-			try:
-				return datetime(yyyy, mo, d, h, mm), 2
-			except Exception:
-				return None, 0
-		# 4) YYYY-MM-DDTHH:MM | YYYY-MM-DD HH:MM (одно токен-значение)
-		if len(tokens) >= 2:
-			cand = tokens[1].replace("T", " ")
-			try:
-				when = datetime.strptime(cand, "%Y-%m-%d %H:%M")
-				return when, 1
-			except Exception:
-				pass
-		return None, 0
+    text = (message.text or "").strip()
+    parts = text.split(maxsplit=2)
+    if len(parts) < 2:
+        await message.answer("Использование: /напомнить <дата время> <текст>")
+        return
+    # Отделим дату+время от текста гибко
+    tokens = text.split()
+    if len(tokens) < 2:
+        await message.answer("Использование: /напомнить <дата время> <текст>")
+        return
+    # Сценарии: HH:MM | dd.mm HH:MM | dd.mm.yy HH:MM | YYYY-MM-DD HH:MM | YYYY-MM-DDTHH:MM
+    def parse_when(tokens: list[str]) -> tuple[datetime | None, int]:
+        # Возвращает (when, consumed_tokens_after_command)
+        from app.config import get_settings as _get_settings3
+        from zoneinfo import ZoneInfo as _ZI3
+        tz = _ZI3(_get_settings3().timezone)
+        now = datetime.now(tz)
+        # 1) HH:MM
+        m = re.fullmatch(r"(\d{1,2}):(\d{2})", tokens[1]) if len(tokens) >= 2 else None
+        if m and len(tokens) >= 3:  # требуется ещё хотя бы одно слово текста после времени
+            h, mm = int(m.group(1)), int(m.group(2))
+            try:
+                return datetime(now.year, now.month, now.day, h, mm), 1
+            except Exception:
+                return None, 0
+        # 2) dd.mm HH:MM
+        if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
+            d, mo = map(int, tokens[1].split("."))
+            h, mm = map(int, tokens[2].split(":"))
+            try:
+                return datetime(now.year, mo, d, h, mm), 2
+            except Exception:
+                return None, 0
+        # 3) dd.mm.yy HH:MM
+        if len(tokens) >= 3 and re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{2}", tokens[1]) and re.fullmatch(r"\d{1,2}:\d{2}", tokens[2]):
+            d, mo, yy = tokens[1].split(".")
+            d, mo, yy = int(d), int(mo), int(yy)
+            yyyy = 2000 + yy
+            h, mm = map(int, tokens[2].split(":"))
+            try:
+                return datetime(yyyy, mo, d, h, mm), 2
+            except Exception:
+                return None, 0
+        # 4) YYYY-MM-DDTHH:MM | YYYY-MM-DD HH:MM (одно токен-значение)
+        if len(tokens) >= 2:
+            cand = tokens[1].replace("T", " ")
+            try:
+                when = datetime.strptime(cand, "%Y-%m-%d %H:%M")
+                return when, 1
+            except Exception:
+                pass
+        return None, 0
 
-	when, consumed = parse_when(tokens)
-	if when is None or consumed == 0:
-		await message.answer("Неверный формат даты/времени. Примеры: /напомнить 21.08 20:19 текст | /напомнить 21.08.25 20:19 текст | /напомнить 20:19 текст")
-		return
-	# Остальной текст после потребленных токенов (учитываем, что tokens[0] = /напомнить)
-	msg_tokens = tokens[1 + consumed:]
-	msg_text = " ".join(msg_tokens).strip()
-	if not msg_text:
-		await message.answer("Добавьте текст напоминания после даты и времени")
-		return
-	with session_scope() as session:
-		rem = create_reminder(session, text=msg_text, remind_at=when, user_id=message.from_user.id)
-	await message.answer(f"Напоминание создано: id={rem.id}, на {when.strftime('%Y-%m-%d %H:%M')}")
+    when, consumed = parse_when(tokens)
+    if when is None or consumed == 0:
+        await message.answer("Неверный формат даты/времени. Примеры: /напомнить 21.08 20:19 текст | /напомнить 21.08.25 20:19 текст | /напомнить 20:19 текст")
+        return
+    # Остальной текст после потребленных токенов (учитываем, что tokens[0] = /напомнить)
+    msg_tokens = tokens[1 + consumed:]
+    msg_text = " ".join(msg_tokens).strip()
+    if not msg_text:
+        await message.answer("Добавьте текст напоминания после даты и времени")
+        return
+    with session_scope() as session:
+        rem = create_reminder(session, text=msg_text, remind_at=when, user_id=message.from_user.id)
+    await message.answer(f"Напоминание создано: id={rem.id}, на {when.strftime('%Y-%m-%d %H:%M')}")
 
 
 # Алиасы для команды напоминаний с параметрами
 @router.message(F.text.casefold().startswith("напомнить "))
 async def cmd_remind_ru_with_params(message: Message) -> None:
-	await cmd_remind(message)
+    await cmd_remind(message)
 
 
 @router.message(F.text.casefold().startswith("/напомнить "))
 async def cmd_remind_ru_slash_with_params(message: Message) -> None:
-	await cmd_remind(message)
+    await cmd_remind(message)
 
 
 @router.message(Command("reminders"))
 async def cmd_reminders(message: Message) -> None:
-	with session_scope() as session:
-		items = list_active_reminders(session)
-	if not items:
-		await message.answer("Активных напоминаний нет.")
-		return
-	lines = ["Активные напоминания:"]
-	for r in items:
-		lines.append(f"#{r.id}: {r.text} — {r.remind_at}")
-	await message.answer("\n".join(lines))
+    with session_scope() as session:
+        items = list_active_reminders(session)
+    if not items:
+        await message.answer("Активных напоминаний нет.")
+        return
+    lines = ["Активные напоминания:"]
+    for r in items:
+        lines.append(f"#{r.id}: {r.text} — {r.remind_at}")
+    await message.answer("\n".join(lines))
 
 
 # Алиасы для команды напоминаний
-@router.message(F.text.casefold().in_({"/напоминания", "напоминания"}))
+@router.message(F.text.casefold().startswith("/напоминания"))
 async def cmd_reminders_ru(message: Message) -> None:
-	await cmd_reminders(message)
+    await cmd_reminders(message)
 
 
 @router.message(F.text.casefold().in_({"/мои_напоминания", "мои напоминания"}))
 async def cmd_reminders_ru2(message: Message) -> None:
-	await cmd_reminders(message)
+    await cmd_reminders(message)
 
 
 @router.message(F.text.casefold().in_({"/активные_напоминания", "активные напоминания"}))
 async def cmd_reminders_ru3(message: Message) -> None:
-	await cmd_reminders(message)
+    await cmd_reminders(message)
 
 
 @router.message(Command("cancel_reminder"))
 async def cmd_cancel_reminder(message: Message) -> None:
-	text = (message.text or "").strip()
-	parts = text.split(maxsplit=1)
-	if len(parts) < 2:
-		await message.answer("Использование: /отменить_напоминание <id>")
-		return
-	try:
-		rid = int(parts[1])
-	except Exception:
-		await message.answer("ID должен быть числом.")
-		return
-	with session_scope() as session:
-		ok = cancel_reminder(session, rid)
-	await message.answer("Отменено" if ok else "Не найдено или уже отправлено")
+    text = (message.text or "").strip()
+    parts = text.split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("Использование: /отменить_напоминание <id>")
+        return
+    try:
+        rid = int(parts[1])
+    except Exception:
+        await message.answer("ID должен быть числом.")
+        return
+    with session_scope() as session:
+        ok = cancel_reminder(session, rid)
+    await message.answer("Отменено" if ok else "Не найдено или уже отправлено")
 
 
 # Алиасы для команды отмены напоминаний с параметрами
 @router.message(F.text.casefold().startswith("отменить_напоминание "))
 async def cmd_cancel_reminder_ru1_with_params(message: Message) -> None:
-	await cmd_cancel_reminder(message)
+    await cmd_cancel_reminder(message)
 
 
 @router.message(F.text.casefold().startswith("/отменить_напоминание "))
 async def cmd_cancel_reminder_ru1_slash_with_params(message: Message) -> None:
-	await cmd_cancel_reminder(message)
+    await cmd_cancel_reminder(message)
 
 
 @router.message(F.text.casefold().startswith("отмена_напоминания "))
 async def cmd_cancel_reminder_ru2_with_params(message: Message) -> None:
-	await cmd_cancel_reminder(message)
+    await cmd_cancel_reminder(message)
 
 
 @router.message(F.text.casefold().startswith("/отмена_напоминания "))
 async def cmd_cancel_reminder_ru2_slash_with_params(message: Message) -> None:
-	await cmd_cancel_reminder(message)
+    await cmd_cancel_reminder(message)
 
 
 @router.message(Command("diagnose"))
 async def cmd_diagnose(message: Message) -> None:
-	from app.services.diagnostics import run_diagnostics
-	with session_scope() as session:
-		text, issues = run_diagnostics(session)
-	# Телеграм ограничивает длину сообщения ~4К — порежем при необходимости
-	if len(text) > 3500:
-		text = text[:3500] + "\n... (обрезано)"
-	await message.answer(text)
+    from app.services.diagnostics import run_diagnostics
+    with session_scope() as session:
+        text, issues = run_diagnostics(session)
+    # Телеграм ограничивает длину сообщения ~4К — порежем при необходимости
+    if len(text) > 3500:
+        text = text[:3500] + "\n... (обрезано)"
+    await message.answer(text)
 
 
 # Алиасы для команды диагностики
 @router.message(F.text.casefold().in_({"/диагностика", "диагностика"}))
 async def cmd_diagnose_ru(message: Message) -> None:
-	await cmd_diagnose(message)
+    await cmd_diagnose(message)
 
 
 @router.message(F.text.casefold().in_({"/самодиагностика", "самодиагностика"}))
 async def cmd_diagnose_ru2(message: Message) -> None:
-	await cmd_diagnose(message)
+    await cmd_diagnose(message)
 
 
 @router.message(F.text.casefold().in_({"/проверить", "проверить"}))
 async def cmd_diagnose_ru3(message: Message) -> None:
-	await cmd_diagnose(message)
+    await cmd_diagnose(message)
 
 
 @router.message(F.text.casefold().in_({"/статус", "статус"}))
-async def cmd_diagnose_ru4(message: Message) -> None:
-	await cmd_diagnose(message)
+async def cmd_diagnose_ru2(message: Message) -> None:
+    await cmd_diagnose(message)
 
 
 @router.message(F.text.casefold().in_({"/здоровье", "здоровье"}))
 async def cmd_diagnose_ru5(message: Message) -> None:
-	await cmd_diagnose(message)
+    await cmd_diagnose(message)
 
 
 @router.message(Command("tokens"))
