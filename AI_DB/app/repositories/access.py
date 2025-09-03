@@ -36,7 +36,7 @@ def list_tokens(session: Session) -> List[AccessToken]:
 
 
 def cleanup_expired(session: Session) -> int:
-	now = datetime.now(ZoneInfo("Europe/Moscow"))
+	now = datetime.now(ZoneInfo("Asia/Tashkent"))
 	q = session.query(AccessToken).filter(AccessToken.expires_at.isnot(None), AccessToken.expires_at < now)
 	count = q.count()
 	for t in q.all():

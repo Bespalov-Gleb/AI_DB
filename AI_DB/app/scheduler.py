@@ -34,6 +34,7 @@ async def _send_document(bot: Bot, chat_id: int, filepath: Path, caption: str) -
 async def daily_matches_job() -> None:
 	logger.info("daily_matches_job_started")
 	settings = get_settings()
+	logger.info("daily_matches_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id), timezone=settings.timezone)
 	if not settings.telegram_bot_token or not settings.admin_chat_id:
 		logger.warning("daily_matches_job_skipped", reason="missing_telegram_config", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 		return
@@ -78,6 +79,7 @@ async def daily_matches_job() -> None:
 def weekly_backup_job() -> None:
 	logger.info("weekly_backup_job_started")
 	settings = get_settings()
+	logger.info("weekly_backup_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
 	if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password:
 		logger.warning("weekly_backup_job_skipped", reason="missing_smtp_config", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password))
 		return
@@ -102,6 +104,7 @@ def weekly_backup_job() -> None:
 def weekly_stats_job() -> None:
 	logger.info("weekly_stats_job_started")
 	settings = get_settings()
+	logger.info("weekly_stats_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
 	if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password:
 		logger.warning("weekly_stats_job_skipped", reason="missing_smtp_config", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password))
 		return
@@ -121,8 +124,11 @@ def weekly_stats_job() -> None:
 
 
 async def reminders_tick_job() -> None:
+	logger.info("reminders_tick_job_started")
 	settings = get_settings()
+	logger.info("reminders_tick_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 	if not settings.telegram_bot_token or not settings.admin_chat_id:
+		logger.warning("reminders_tick_job_skipped", reason="missing_telegram_config", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 		return
 	tz = ZoneInfo(settings.timezone)
 	now = datetime.now(tz)
@@ -164,8 +170,11 @@ async def reminders_tick_job() -> None:
 
 
 async def weekly_diagnostics_job() -> None:
+	logger.info("weekly_diagnostics_job_started")
 	settings = get_settings()
+	logger.info("weekly_diagnostics_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 	if not settings.telegram_bot_token or not settings.admin_chat_id:
+		logger.warning("weekly_diagnostics_job_skipped", reason="missing_telegram_config", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
 		return
 	with session_scope() as session:
 		text, _ = run_diagnostics(session)
@@ -195,9 +204,12 @@ def friday_test_report_job() -> None:
 
 def start_scheduler() -> None:
 	global _scheduler
+	logger.info("start_scheduler_called")
 	if _scheduler is not None:
+		logger.info("scheduler_already_running")
 		return
 	settings = get_settings()
+	logger.info("start_scheduler_settings", timezone=settings.timezone, has_telegram=bool(settings.telegram_bot_token), has_admin=bool(settings.admin_chat_id), has_smtp=bool(settings.smtp_host))
 	tz = ZoneInfo(settings.timezone)
 	_scheduler = AsyncIOScheduler(timezone=tz)
 	
@@ -235,3 +247,9 @@ def start_scheduler() -> None:
 	
 	_scheduler.start()
 	logger.info("scheduler_started", job_count=len(_scheduler.get_jobs()), timezone=str(tz))
+	
+	# Проверяем, что задачи действительно добавлены
+	all_jobs = _scheduler.get_jobs()
+	logger.info("scheduler_jobs_verification", total_jobs=len(all_jobs))
+	for job in all_jobs:
+		logger.info("scheduler_job_details", id=job.id, name=job.name, trigger=str(job.trigger), next_run=str(job.next_run_time))

@@ -379,7 +379,7 @@ async def cmd_audit(message: Message) -> None:
 		return
 	from datetime import datetime as _dt
 	from pathlib import Path
-	stamp = _dt.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
+			stamp = _dt.now(ZoneInfo("Asia/Tashkent")).strftime("%Y%m%d_%H%M%S")
 	out_path = Path.cwd() / f"audit_{stamp}.xlsx"
 	export_audit_to_excel(rows, out_path)
 	try:
@@ -578,7 +578,7 @@ async def cmd_grant(message: Message) -> None:
 	from datetime import datetime, timedelta
 	expires_at = None
 	if expire_minutes and expire_minutes > 0:
-		expires_at = datetime.now(ZoneInfo("Europe/Moscow")) + timedelta(minutes=expire_minutes)
+		expires_at = datetime.now(ZoneInfo("Asia/Tashkent")) + timedelta(minutes=expire_minutes)
 	with session_scope() as session:
 		t = access_create(session, expires_at)
 	settings = get_settings()
@@ -810,7 +810,7 @@ async def cmd_export(message: Message) -> None:
 	if not items:
 		await message.answer("Нет данных по заданным фильтрам.")
 		return
-	stamp = datetime.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
+	stamp = datetime.now(ZoneInfo("Asia/Tashkent")).strftime("%Y%m%d_%H%M%S")
 	filename = f"export_{stamp}.xlsx"
 	out_path = Path.cwd() / filename
 	logger.info("export_started", count=len(items), city=city, type=listing_type, price_min=str(price_min) if price_min else None, price_max=str(price_max) if price_max else None)
@@ -892,7 +892,7 @@ async def cmd_matches(message: Message) -> None:
             "sale_contact": p.Sale.contact,
             "score": round(p.score, 3),
         })
-    out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Europe/Moscow')).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    	out = _Path.cwd() / f"matches_{_dt.now(ZoneInfo('Asia/Tashkent')).strftime('%Y%m%d_%H%M%S')}.xlsx"
     export_matches_to_excel(rows, out)
     try:
         await message.answer_document(FSInputFile(path=out), caption=f"Совпадения: {len(rows)} пар")
@@ -1294,7 +1294,7 @@ async def ai_fallback(message: Message) -> None:
 			else:
 				from datetime import datetime as _dt
 				from pathlib import Path as _Path
-				out = _Path.cwd() / f"export_{_dt.now(ZoneInfo('Europe/Moscow')).strftime('%Y%m%d_%H%M%S')}.xlsx"
+				out = _Path.cwd() / f"export_{_dt.now(ZoneInfo('Asia/Tashkent')).strftime('%Y%m%d_%H%M%S')}.xlsx"
 				_xlsx(items, out, listing_id_to_photos=photos_map)
 				try:
 					await message.answer_document(FSInputFile(path=out), caption=f"Экспорт: {len(items)} записей")

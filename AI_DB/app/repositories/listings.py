@@ -42,7 +42,7 @@ def create_listing_from_parsed(session: Session, parsed: ParsedListing) -> Listi
 
 
 def list_recent_listings(session: Session, limit: int = 10) -> List[Listing]:
-	limit = max(1, min(limit, 50))
+	limit = max(1, limit)  # Убираем ограничение в 50 записей
 	return session.query(Listing).order_by(Listing.id.desc()).limit(limit).all()
 
 

@@ -59,19 +59,19 @@ def _format_datetime(dt) -> str:
     if dt is None:
         return "-"
     try:
-        # Если время уже в московской таймзоне, просто форматируем
-        if dt.tzinfo == ZoneInfo("Europe/Moscow"):
+        # Если время уже в ташкентской таймзоне, просто форматируем
+        if dt.tzinfo == ZoneInfo("Asia/Tashkent"):
             return dt.strftime("%Y-%m-%d %H:%M:%S")
-        # Если время naive (без таймзоны), считаем что это UTC и конвертируем в московское
+        # Если время naive (без таймзоны), считаем что это UTC и конвертируем в ташкентское
         elif dt.tzinfo is None:
             from datetime import timezone
             utc_dt = dt.replace(tzinfo=timezone.utc)
-            moscow_dt = utc_dt.astimezone(ZoneInfo("Europe/Moscow"))
-            return moscow_dt.strftime("%Y-%m-%d %H:%M:%S")
-        # Если время в другой таймзоне, конвертируем в московское
+            tashkent_dt = utc_dt.astimezone(ZoneInfo("Asia/Tashkent"))
+            return tashkent_dt.strftime("%Y-%m-%d %H:%M:%S")
+        # Если время в другой таймзоне, конвертируем в ташкентское
         else:
-            moscow_dt = dt.astimezone(ZoneInfo("Europe/Moscow"))
-            return moscow_dt.strftime("%Y-%m-%d %H:%M:%S")
+            tashkent_dt = dt.astimezone(ZoneInfo("Asia/Tashkent"))
+            return tashkent_dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         return str(dt)
 
@@ -158,9 +158,9 @@ def _normalize_ltype(value: str | None) -> str | None:
     return mapping.get(v)
 
 @router.get("/", response_class=HTMLResponse)
-async def list_view(request: Request, city: Optional[str] = None, ltype: Optional[str] = Query(None, alias="type"), q: Optional[str] = None, fuzzy_token_threshold: float = 0.6, page: int = 1, per_page: int = 10, _=Depends(require_web_access)):
+async def list_view(request: Request, city: Optional[str] = None, ltype: Optional[str] = Query(None, alias="type"), q: Optional[str] = None, fuzzy_token_threshold: float = 0.6, page: int = 1, per_page: int = 0, _=Depends(require_web_access)):
 	page = max(1, page)
-	per_page = min(50, max(1, per_page))
+	per_page = max(1, per_page)  # Убираем ограничение в 50 записей
 	from app.services.matching import title_similarity
 	with session_scope() as session:
 		query = session.query(Listing)
@@ -187,10 +187,19 @@ async def list_view(request: Request, city: Optional[str] = None, ltype: Optiona
 		total = len(items)
 	# Пагинация после фильтра
 	page = max(1, page)
-	per_page = min(50, max(1, per_page))
-	pages = ceil(total / per_page) if per_page else 1
-	start = (page - 1) * per_page
-	end = start + per_page
+	
+	# Если per_page не указан или 0, показываем все записи
+	if not per_page or per_page <= 0:
+		per_page = total
+		pages = 1
+		start = 0
+		end = total
+	else:
+		per_page = max(1, per_page)  # Убираем ограничение в 50 записей
+		pages = ceil(total / per_page) if per_page else 1
+		start = (page - 1) * per_page
+		end = start + per_page
+	
 	items = items[start:end]
 	# в поле ввода вернём исходное значение пользователя
 	return templates.TemplateResponse("list.html", {"request": request, "items": items, "featured": featured, "total": total, "page": page, "pages": pages, "per_page": per_page, "city": city, "ltype": ltype, "q": q, "fuzzy_token_threshold": fuzzy_token_threshold})
@@ -384,7 +393,7 @@ async def matches_export(request: Request, threshold: float = 0.45, w_title: flo
 			"sale_contact": p.Sale.contact,
 			"score": round(p.score, 3),
 		})
-	stamp = _dt.now(ZoneInfo("Europe/Moscow")).strftime("%Y%m%d_%H%M%S")
+	stamp = _dt.now(ZoneInfo("Asia/Tashkent")).strftime("%Y%m%d_%H%M%S")
 	filepath = os.path.abspath(f"matches_{stamp}.xlsx")
 	export_matches_to_excel(rows, filepath)
 	def _cleanup(path: str) -> None:
@@ -412,7 +421,7 @@ async def tokens_create(request: Request, _=Depends(require_web_access)):
 	try:
 		m = int(minutes) if minutes is not None else None
 		if m and m > 0:
-			expires_at = datetime.now(ZoneInfo("Europe/Moscow")) + timedelta(minutes=m)
+			expires_at = datetime.now(ZoneInfo("Asia/Tashkent")) + timedelta(minutes=m)
 	except Exception:
 		pass
 	with session_scope() as session:

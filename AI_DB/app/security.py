@@ -24,6 +24,6 @@ def require_web_access(request: Request, creds: Optional[HTTPBasicCredentials] =
 	if token:
 		with session_scope() as session:
 			entry = get_token(session, token)
-			if entry and (entry.expires_at is None or entry.expires_at > datetime.now(ZoneInfo("Europe/Moscow"))):
+			if entry and (entry.expires_at is None or entry.expires_at > datetime.now(ZoneInfo("Asia/Tashkent"))):
 				return
 	raise HTTPException(status_code=401, detail="Unauthorized")

@@ -12,4 +12,4 @@ class AccessToken(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     expires_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
+    	created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))

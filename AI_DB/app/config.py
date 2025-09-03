@@ -13,7 +13,7 @@ class Settings:
 	app_env: str = os.getenv("APP_ENV", "local")
 	app_host: str = os.getenv("APP_HOST", "0.0.0.0")
 	app_port: int = int(os.getenv("APP_PORT", "5000")) if os.getenv("APP_PORT") else 5000
-	timezone: str = os.getenv("TIMEZONE", "Europe/Moscow")
+	timezone: str = os.getenv("TIMEZONE", "Asia/Tashkent")
 
 	postgres_host: str = os.getenv("POSTGRES_HOST", "localhost")
 	postgres_port: int = int(os.getenv("POSTGRES_PORT", "5432")) if os.getenv("POSTGRES_PORT") else 5432

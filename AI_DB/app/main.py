@@ -20,8 +20,11 @@ app = FastAPI(title="AI DB Service")
 
 @app.on_event("startup")
 def on_startup() -> None:
+	logger.info("app_startup_started")
 	create_database_schema()
+	logger.info("database_schema_created")
 	start_scheduler()
+	logger.info("scheduler_started_from_main")
 	logger.info("app_started", status="startup_completed")
 
 

@@ -15,5 +15,5 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(32), default="guest", nullable=False)
     access_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")), onupdate=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
+    	created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))
+	updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")), onupdate=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))

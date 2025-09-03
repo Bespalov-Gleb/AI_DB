@@ -14,4 +14,4 @@ class ChatMessage(Base):
 	role: Mapped[str] = mapped_column(String(16), nullable=False)  # "user" | "assistant"
 	text: Mapped[str] = mapped_column(Text, nullable=False)
 
-	created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
+	created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))

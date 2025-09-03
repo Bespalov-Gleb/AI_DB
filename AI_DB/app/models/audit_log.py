@@ -16,4 +16,4 @@ class AuditLog(Base):
     payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     result: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
+    	created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))

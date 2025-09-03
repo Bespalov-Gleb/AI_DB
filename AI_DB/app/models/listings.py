@@ -29,5 +29,5 @@ class Listing(Base):
 
     type: Mapped[str] = mapped_column(Enum(ListingTypeEnum.SALE, ListingTypeEnum.DEMAND, ListingTypeEnum.CONTRACT, name="listing_type"), nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Europe/Moscow")), onupdate=lambda: datetime.now(ZoneInfo("Europe/Moscow")))
+	created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))
+	updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(ZoneInfo("Asia/Tashkent")), onupdate=lambda: datetime.now(ZoneInfo("Asia/Tashkent")))

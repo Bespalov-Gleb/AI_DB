@@ -51,7 +51,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ai_db}
       POSTGRES_USER: ${POSTGRES_USER:-ai_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_password}
-      TIMEZONE: ${TIMEZONE:-Europe/Moscow}
+      TIMEZONE: ${TIMEZONE:-Asia/Tashkent}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -94,7 +94,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ai_db}
       POSTGRES_USER: ${POSTGRES_USER:-ai_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_password}
-      TIMEZONE: ${TIMEZONE:-Europe/Moscow}
+      TIMEZONE: ${TIMEZONE:-Asia/Tashkent}
       ADMIN_CHAT_ID: ${ADMIN_CHAT_ID}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       WEB_BASE_URL: ${WEB_BASE_URL}
