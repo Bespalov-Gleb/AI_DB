@@ -7,7 +7,7 @@ from typing import List
 from zoneinfo import ZoneInfo
 
 # ВНИМАНИЕ: ТЕСТОВОЕ РАСПИСАНИЕ
-# Все задачи запускаются по средам в 20:15-20:18 (UTC+5) для удобства тестирования
+# Все задачи запускаются по средам в 20:35-20:38 (UTC+5) для удобства тестирования
 # После тестирования вернуть на обычное расписание:
 # - daily_matches: ежедневно в 9:00
 # - weekly_backup: по пятницам в 17:00  
@@ -35,7 +35,7 @@ logger = structlog.get_logger(__name__)
 
 
 async def _send_document(bot: Bot, chat_id: int, filepath: Path, caption: str) -> None:
-	with filepath.open('rb') as fp:
+	with open(filepath, 'rb') as fp:
 		await bot.send_document(chat_id=chat_id, document=fp, caption=caption)
 
 
@@ -71,7 +71,8 @@ async def daily_matches_job() -> None:
 		finally:
 			await bot.session.close()
 		return
-		now = datetime.now(ZoneInfo(settings.timezone))
+	
+	now = datetime.now(ZoneInfo(settings.timezone))
 	stamp = now.strftime('%Y%m%d_%H%M%S')
 	rows = []
 	for p in pairs:
@@ -199,8 +200,8 @@ async def reminders_tick_job() -> None:
 			if not target_chat:
 				continue
 			logger.info("reminder_sending", reminder_id=r.id, to=int(target_chat))
-			now = datetime.now(ZoneInfo(settings.timezone))
-			message = f"⏰ Напоминание #{r.id}\n📝 {r.text}\n🕐 Время: {now.strftime('%H:%M:%S')} (UTC+5)"
+			current_time = datetime.now(ZoneInfo(settings.timezone))
+			message = f"⏰ Напоминание #{r.id}\n📝 {r.text}\n🕐 Время: {current_time.strftime('%H:%M:%S')} (UTC+5)"
 			await bot.send_message(chat_id=target_chat, text=message)
 			with session_scope() as session:
 				mark_sent(session, r.id)
@@ -296,20 +297,20 @@ def start_scheduler() -> None:
 	# Добавляем задачи с логированием (ТЕСТОВОЕ РАСПИСАНИЕ - по средам)
 	logger.info("scheduler_setup_start", timezone=str(tz))
 	
-	_scheduler.add_job(daily_matches_job, trigger='cron', day_of_week='wed', hour=20, minute=15, id='daily_matches')
-	logger.info("scheduler_job_added", job_id='daily_matches', schedule='Wednesday 20:15 (TEST)')
+	_scheduler.add_job(daily_matches_job, trigger='cron', day_of_week='wed', hour=20, minute=35, id='daily_matches')
+	logger.info("scheduler_job_added", job_id='daily_matches', schedule='Wednesday 20:35 (TEST)')
 	
-	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='wed', hour=20, minute=16, id='weekly_backup')
-	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Wednesday 20:16 (TEST)')
+	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='wed', hour=20, minute=36, id='weekly_backup')
+	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Wednesday 20:36 (TEST)')
 	
-	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='wed', hour=20, minute=17, id='weekly_stats')
-	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Wednesday 20:17 (TEST)')
+	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='wed', hour=20, minute=37, id='weekly_stats')
+	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Wednesday 20:37 (TEST)')
 	
 	_scheduler.add_job(reminders_tick_job, trigger='cron', second='0', id='reminders_tick')
 	logger.info("scheduler_job_added", job_id='reminders_tick', schedule='every second')
 	
-	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=20, minute=18, id='weekly_diagnostics')
-	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 20:18 (TEST)')
+	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=20, minute=38, id='weekly_diagnostics')
+	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 20:38 (TEST)')
 	
 	# Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту (ОТКЛЮЧЕНО)
 	# _scheduler.add_job(test_message_job, trigger='cron', minute='*', id='test_message')
