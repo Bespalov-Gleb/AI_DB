@@ -30,7 +30,7 @@
 						<input type="text" name="type" value="{{ ltype or '' }}" placeholder="продажа | покупка | контракт" />
 					</label>
 					<label>На странице
-						<input type="number" name="per_page" value="{{ per_page if per_page > 0 else '' }}" min="1" placeholder="1000" title="Укажите количество записей на странице (без ограничений)" />
+						<input type="number" name="per_page" value="{{ per_page if per_page and per_page != '' and per_page != '0' else '' }}" min="1" placeholder="1000" title="Укажите количество записей на странице (без ограничений)" />
 						<small style="margin-top: 4px; color: var(--muted);">Оставьте пустым для показа всех записей</small>
 					</label>
 					<button class="btn primary" type="submit">Фильтровать</button>
@@ -41,8 +41,13 @@
 		<p class="muted">
 			{% if per_page == '' or per_page == '0' or per_page == 0 %}
 				Показаны все записи: {{ total }}
-			{% elif per_page|int > 0 and per_page|int < total %}
-				Показано: {{ items|length }} из {{ total }} записей
+			{% elif per_page and per_page != '' and per_page != '0' %}
+				{% set per_page_num = per_page|int %}
+				{% if per_page_num > 0 and per_page_num < total %}
+					Показано: {{ items|length }} из {{ total }} записей
+				{% else %}
+					Всего: {{ total }} записей
+				{% endif %}
 			{% else %}
 				Всего: {{ total }} записей
 			{% endif %}
