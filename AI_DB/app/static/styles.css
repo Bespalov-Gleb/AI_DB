@@ -11,7 +11,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; }
 
-.container { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+.container { max-width: 1400px; margin: 24px auto; padding: 0 16px; }
 
 h1 { margin: 0 0 16px; font-size: 28px; }
 h3 { margin: 24px 0 12px; }
@@ -81,6 +81,9 @@ h3 { margin: 24px 0 12px; }
 .table .btn {
 	min-width: 80px;
 	text-align: center;
+	display: inline-block !important;
+	visibility: visible !important;
+	opacity: 1 !important;
 }
 
 /* Ensure action column has enough width */
@@ -88,6 +91,7 @@ h3 { margin: 24px 0 12px; }
 .table td:last-child {
 	min-width: 100px;
 	text-align: center;
+	width: auto;
 }
 
 /* Badge */
