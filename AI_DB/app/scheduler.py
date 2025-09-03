@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import List
 from zoneinfo import ZoneInfo
 
-# ВНИМАНИЕ: ТЕСТОВОЕ РАСПИСАНИЕ
-# Все задачи запускаются по средам в 21:05-21:08 (UTC+5) для удобства тестирования
-# После тестирования вернуть на обычное расписание:
+# ВНИМАНИЕ: ПРОИЗВОДСТВЕННОЕ РАСПИСАНИЕ
+# Все задачи запускаются по обычному расписанию:
 # - daily_matches: ежедневно в 9:00
 # - weekly_backup: по пятницам в 17:00  
 # - weekly_stats: по понедельникам в 9:00
@@ -40,7 +39,7 @@ async def _send_document(bot: Bot, chat_id: int, filepath: Path, caption: str) -
 
 
 async def daily_matches_job() -> None:
-	"""Задача поиска совпадений - запускается по средам в 21:05 (UTC+5)"""
+	"""Задача поиска совпадений - запускается ежедневно в 9:00 (UTC+5)"""
 	logger.info("daily_matches_job_started")
 	settings = get_settings()
 	logger.info("daily_matches_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id), timezone=settings.timezone)
@@ -106,7 +105,7 @@ async def daily_matches_job() -> None:
 
 
 async def weekly_backup_job() -> None:
-	"""Задача создания бэкапа - запускается по средам в 21:06 (UTC+5)"""
+	"""Задача создания бэкапа - запускается по пятницам в 17:00 (UTC+5)"""
 	logger.info("weekly_backup_job_started")
 	settings = get_settings()
 	logger.info("weekly_backup_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
@@ -142,7 +141,7 @@ async def weekly_backup_job() -> None:
 
 
 async def weekly_stats_job() -> None:
-	"""Задача создания статистики - запускается по средам в 21:07 (UTC+5)"""
+	"""Задача создания статистики - запускается по понедельникам в 9:00 (UTC+5)"""
 	logger.info("weekly_stats_job_started")
 	settings = get_settings()
 	logger.info("weekly_stats_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
@@ -218,7 +217,7 @@ async def reminders_tick_job() -> None:
 
 
 async def weekly_diagnostics_job() -> None:
-	"""Задача диагностики - запускается по средам в 21:08 (UTC+5)"""
+	"""Задача диагностики - запускается по средам в 18:00 (UTC+5)"""
 	logger.info("weekly_diagnostics_job_started")
 	settings = get_settings()
 	logger.info("weekly_diagnostics_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
@@ -312,20 +311,20 @@ def start_scheduler() -> None:
 	# Добавляем задачи с логированием (ТЕСТОВОЕ РАСПИСАНИЕ - по средам)
 	logger.info("scheduler_setup_start", timezone=str(tz))
 	
-	_scheduler.add_job(daily_matches_job, trigger='cron', day_of_week='wed', hour=21, minute=5, id='daily_matches')
-	logger.info("scheduler_job_added", job_id='daily_matches', schedule='Wednesday 21:05 (TEST)')
+	_scheduler.add_job(daily_matches_job, trigger='cron', hour=9, minute=0, id='daily_matches')
+	logger.info("scheduler_job_added", job_id='daily_matches', schedule='Daily 09:00 (UTC+5)')
 	
-	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='wed', hour=21, minute=6, id='weekly_backup')
-	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Wednesday 21:06 (TEST)')
+	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='fri', hour=17, minute=0, id='weekly_backup')
+	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Friday 17:00 (UTC+5)')
 	
-	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='wed', hour=21, minute=7, id='weekly_stats')
-	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Wednesday 21:07 (TEST)')
+	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='mon', hour=9, minute=0, id='weekly_stats')
+	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Monday 09:00 (UTC+5)')
 	
 	_scheduler.add_job(reminders_tick_job, trigger='cron', second='0', id='reminders_tick')
 	logger.info("scheduler_job_added", job_id='reminders_tick', schedule='every second')
 	
-	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=21, minute=8, id='weekly_diagnostics')
-	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 21:08 (TEST)')
+	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=18, minute=0, id='weekly_diagnostics')
+	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 18:00 (UTC+5)')
 	
 	# Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту (ОТКЛЮЧЕНО)
 	# _scheduler.add_job(test_message_job, trigger='cron', minute='*', id='test_message')
