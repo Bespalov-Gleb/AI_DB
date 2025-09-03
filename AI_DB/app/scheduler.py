@@ -6,6 +6,14 @@ from pathlib import Path
 from typing import List
 from zoneinfo import ZoneInfo
 
+# ВНИМАНИЕ: ТЕСТОВОЕ РАСПИСАНИЕ
+# Все задачи запускаются по средам в 20:15-20:18 (UTC+5) для удобства тестирования
+# После тестирования вернуть на обычное расписание:
+# - daily_matches: ежедневно в 9:00
+# - weekly_backup: по пятницам в 17:00  
+# - weekly_stats: по понедельникам в 9:00
+# - weekly_diagnostics: по средам в 18:00
+
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -32,6 +40,7 @@ async def _send_document(bot: Bot, chat_id: int, filepath: Path, caption: str) -
 
 
 async def daily_matches_job() -> None:
+	"""Задача поиска совпадений - запускается по средам в 20:15 (UTC+5)"""
 	logger.info("daily_matches_job_started")
 	settings = get_settings()
 	logger.info("daily_matches_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id), timezone=settings.timezone)
@@ -40,11 +49,30 @@ async def daily_matches_job() -> None:
 		return
 	with session_scope() as session:
 		items: List[Listing] = get_all_listings(session)
+	
+	if not items:
+		# Отправляем сообщение о том, что данных нет
+		bot = Bot(token=settings.telegram_bot_token)
+		try:
+			await bot.send_message(chat_id=settings.admin_chat_id, text="📊 Данных для анализа совпадений нет")
+			logger.info("daily_matches_job_completed", pairs_count=0, sent_to=settings.admin_chat_id, reason="no_data")
+		finally:
+			await bot.session.close()
+		return
+	
 	demands, sales = group_listings(items)
 	pairs = find_matches(demands, sales)
 	if not pairs:
+		# Отправляем сообщение о том, что совпадений не найдено
+		bot = Bot(token=settings.telegram_bot_token)
+		try:
+			await bot.send_message(chat_id=settings.admin_chat_id, text="🔍 Совпадений не найдено")
+			logger.info("daily_matches_job_completed", pairs_count=0, sent_to=settings.admin_chat_id)
+		finally:
+			await bot.session.close()
 		return
-	stamp = datetime.now(ZoneInfo(settings.timezone)).strftime('%Y%m%d_%H%M%S')
+		now = datetime.now(ZoneInfo(settings.timezone))
+	stamp = now.strftime('%Y%m%d_%H%M%S')
 	rows = []
 	for p in pairs:
 		rows.append({
@@ -64,7 +92,7 @@ async def daily_matches_job() -> None:
 	out_path = Path.cwd() / filename
 	export_matches_to_excel(rows, out_path)
 	bot = Bot(token=settings.telegram_bot_token)
-	caption = f"Найдено совпадений: {len(rows)}"
+	caption = f"🔍 Найдено совпадений: {len(rows)}\n📅 Дата: {now.strftime('%Y-%m-%d %H:%M')} (UTC+5)\n📊 Всего записей в БД: {len(items)}"
 	try:
 		await _send_document(bot, settings.admin_chat_id, out_path, caption)
 		logger.info("daily_matches_job_completed", pairs_count=len(rows), sent_to=settings.admin_chat_id)
@@ -77,6 +105,7 @@ async def daily_matches_job() -> None:
 
 
 def weekly_backup_job() -> None:
+	"""Задача создания бэкапа - запускается по средам в 20:16 (UTC+5)"""
 	logger.info("weekly_backup_job_started")
 	settings = get_settings()
 	logger.info("weekly_backup_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
@@ -87,12 +116,22 @@ def weekly_backup_job() -> None:
 		items: List[Listing] = get_all_listings(session)
 	if not items:
 		logger.info("weekly_backup_job_skipped", reason="no_data")
+		# Отправляем email о том, что данных для бэкапа нет
+		try:
+			now = datetime.now(ZoneInfo(settings.timezone))
+			send_email(subject="Weekly DB backup - No data", body=f"Backup skipped at {now.strftime('%Y-%m-%d %H:%M:%S')} (UTC+5)\nNo data available\nTimezone: {settings.timezone}")
+			logger.info("weekly_backup_job_completed", items_count=0, sent_to=settings.smtp_to)
+		except Exception as e:
+			logger.error("weekly_backup_job_email_failed", error=str(e))
 		return
-	stamp = datetime.now(ZoneInfo(settings.timezone)).strftime('%Y%m%d_%H%M%S')
+	now = datetime.now(ZoneInfo(settings.timezone))
+	stamp = now.strftime('%Y%m%d_%H%M%S')
 	out_path = Path.cwd() / f"backup_{stamp}.xlsx"
 	export_listings_to_excel(items, out_path)
 	try:
-		send_email(subject="Weekly DB backup", body=f"Backup at {stamp}", attachments=[out_path])
+		subject = f"Weekly DB backup - {len(items)} items"
+		body = f"Backup at {stamp} (UTC+5)\nTotal items: {len(items)}\nTimezone: {settings.timezone}\nGenerated: {now.strftime('%Y-%m-%d %H:%M:%S')}"
+		send_email(subject=subject, body=body, attachments=[out_path])
 		logger.info("weekly_backup_job_completed", items_count=len(items), sent_to=settings.smtp_to)
 	finally:
 		try:
@@ -102,6 +141,7 @@ def weekly_backup_job() -> None:
 
 
 def weekly_stats_job() -> None:
+	"""Задача создания статистики - запускается по средам в 20:17 (UTC+5)"""
 	logger.info("weekly_stats_job_started")
 	settings = get_settings()
 	logger.info("weekly_stats_job_settings", has_host=bool(settings.smtp_host), has_username=bool(settings.smtp_username), has_password=bool(settings.smtp_password), smtp_to=settings.smtp_to)
@@ -110,11 +150,16 @@ def weekly_stats_job() -> None:
 		return
 	with session_scope() as session:
 		items: List[Listing] = get_all_listings(session)
-	stamp = datetime.now(ZoneInfo(settings.timezone)).strftime('%Y%m%d_%H%M%S')
+	
+	# Всегда отправляем статистику, даже если данных нет
+	now = datetime.now(ZoneInfo(settings.timezone))
+	stamp = now.strftime('%Y%m%d_%H%M%S')
 	out_path = Path.cwd() / f"stats_{stamp}.xlsx"
 	export_stats_to_excel(items, out_path)
 	try:
-		send_email(subject="Weekly stats", body=f"Stats at {stamp}", attachments=[out_path])
+		subject = f"Weekly stats - {len(items)} items"
+		body = f"Stats at {stamp} (UTC+5)\nTotal items: {len(items)}\nTimezone: {settings.timezone}\nGenerated: {now.strftime('%Y-%m-%d %H:%M:%S')}"
+		send_email(subject=subject, body=body, attachments=[out_path])
 		logger.info("weekly_stats_job_completed", items_count=len(items), sent_to=settings.smtp_to)
 	finally:
 		try:
@@ -154,7 +199,9 @@ async def reminders_tick_job() -> None:
 			if not target_chat:
 				continue
 			logger.info("reminder_sending", reminder_id=r.id, to=int(target_chat))
-			await bot.send_message(chat_id=target_chat, text=f"Напоминание #{r.id}: {r.text}")
+			now = datetime.now(ZoneInfo(settings.timezone))
+			message = f"⏰ Напоминание #{r.id}\n📝 {r.text}\n🕐 Время: {now.strftime('%H:%M:%S')} (UTC+5)"
+			await bot.send_message(chat_id=target_chat, text=message)
 			with session_scope() as session:
 				mark_sent(session, r.id)
 				log_event(session, action="reminder_sent", resource="reminder", actor=str(target_chat), payload={"reminder_id": r.id, "text": r.text})
@@ -170,6 +217,7 @@ async def reminders_tick_job() -> None:
 
 
 async def weekly_diagnostics_job() -> None:
+	"""Задача диагностики - запускается по средам в 20:18 (UTC+5)"""
 	logger.info("weekly_diagnostics_job_started")
 	settings = get_settings()
 	logger.info("weekly_diagnostics_job_settings", has_token=bool(settings.telegram_bot_token), has_chat_id=bool(settings.admin_chat_id))
@@ -178,9 +226,22 @@ async def weekly_diagnostics_job() -> None:
 		return
 	with session_scope() as session:
 		text, _ = run_diagnostics(session)
+	
+	# Добавляем информацию о времени выполнения
+	now = datetime.now(ZoneInfo(settings.timezone))
+	header = f"📊 Диагностика за {now.strftime('%Y-%m-%d %H:%M')} (UTC+5)\n\n"
+	full_text = header + text
+	
 	bot = Bot(token=settings.telegram_bot_token)
 	try:
-		await bot.send_message(chat_id=settings.admin_chat_id, text=text[:4000])
+		# Разбиваем на части, если текст слишком длинный
+		if len(full_text) > 4000:
+			parts = [full_text[i:i+4000] for i in range(0, len(full_text), 4000)]
+			for i, part in enumerate(parts):
+				await bot.send_message(chat_id=settings.admin_chat_id, text=f"Часть {i+1}/{len(parts)}:\n{part}")
+		else:
+			await bot.send_message(chat_id=settings.admin_chat_id, text=full_text)
+		logger.info("weekly_diagnostics_job_completed", text_length=len(full_text), sent_to=settings.admin_chat_id)
 	finally:
 		await bot.session.close()
 
@@ -197,7 +258,7 @@ async def test_message_job() -> None:
 	bot = Bot(token=settings.telegram_bot_token)
 	try:
 		now = datetime.now(ZoneInfo(settings.timezone))
-		message = f"ТЕСТ - {now.strftime('%H:%M:%S')} (UTC+5)"
+		message = f"🧪 ТЕСТ - {now.strftime('%H:%M:%S')} (UTC+5)\n📊 Планировщик работает корректно!"
 		await bot.send_message(chat_id=settings.admin_chat_id, text=message)
 		logger.info("test_message_job_completed", message=message, sent_to=settings.admin_chat_id)
 	finally:
@@ -232,27 +293,27 @@ def start_scheduler() -> None:
 	tz = ZoneInfo(settings.timezone)
 	_scheduler = AsyncIOScheduler(timezone=tz)
 	
-	# Добавляем задачи с логированием
+	# Добавляем задачи с логированием (ТЕСТОВОЕ РАСПИСАНИЕ - по средам)
 	logger.info("scheduler_setup_start", timezone=str(tz))
 	
-	_scheduler.add_job(daily_matches_job, trigger='cron', hour=9, minute=0, id='daily_matches')
-	logger.info("scheduler_job_added", job_id='daily_matches', schedule='9:00 daily')
+	_scheduler.add_job(daily_matches_job, trigger='cron', day_of_week='wed', hour=20, minute=15, id='daily_matches')
+	logger.info("scheduler_job_added", job_id='daily_matches', schedule='Wednesday 20:15 (TEST)')
 	
-	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='fri', hour=17, minute=0, id='weekly_backup')
-	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Friday 17:00')
+	_scheduler.add_job(weekly_backup_job, trigger='cron', day_of_week='wed', hour=20, minute=16, id='weekly_backup')
+	logger.info("scheduler_job_added", job_id='weekly_backup', schedule='Wednesday 20:16 (TEST)')
 	
-	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='mon', hour=9, minute=0, id='weekly_stats')
-	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Monday 9:00')
+	_scheduler.add_job(weekly_stats_job, trigger='cron', day_of_week='wed', hour=20, minute=17, id='weekly_stats')
+	logger.info("scheduler_job_added", job_id='weekly_stats', schedule='Wednesday 20:17 (TEST)')
 	
 	_scheduler.add_job(reminders_tick_job, trigger='cron', second='0', id='reminders_tick')
 	logger.info("scheduler_job_added", job_id='reminders_tick', schedule='every second')
 	
-	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=18, minute=0, id='weekly_diagnostics')
-	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 18:00')
+	_scheduler.add_job(weekly_diagnostics_job, trigger='cron', day_of_week='wed', hour=20, minute=18, id='weekly_diagnostics')
+	logger.info("scheduler_job_added", job_id='weekly_diagnostics', schedule='Wednesday 20:18 (TEST)')
 	
-	# Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту
-	_scheduler.add_job(test_message_job, trigger='cron', minute='*', id='test_message')
-	logger.info("scheduler_job_added", job_id='test_message', schedule='every minute')
+	# Тестовая задача: отправляет сообщение 'ТЕСТ' каждую минуту (ОТКЛЮЧЕНО)
+	# _scheduler.add_job(test_message_job, trigger='cron', minute='*', id='test_message')
+	# logger.info("scheduler_job_added", job_id='test_message', schedule='every minute')
 	
 	# Опциональный разовый тест-старт: запускает тестовый отчёт через 1 минуту после старта
 	if os.getenv("TEST_EMAIL_ONCE", "0") == "1":
