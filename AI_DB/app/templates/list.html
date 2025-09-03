@@ -54,36 +54,38 @@
 		</p>
 
 		<div class="card">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Наименование</th>
-						<th>Количество</th>
-						<th>Цена</th>
-						<th>Город</th>
-						<th>Контакты</th>
-						<th>Тип</th>
-						<th>Дата</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for it in items %}
-					<tr>
-						<td>{{ it.id }}</td>
-						<td>{{ it.title }}</td>
-						<td>{{ it.quantity or '-' }}</td>
-						<td>{{ it.price or '-' }}</td>
-						<td>{{ it.location or '-' }}</td>
-						<td>{{ it.contact or '-' }}</td>
-						<td><span class="badge {{ it.type }}">{{ it.type|loc_type }}</span></td>
-						<td>{{ it.created_at|format_datetime if it.created_at else '-' }}</td>
-						<td><a class="btn" href="/web/detail/{{ it.id }}">Открыть</a></td>
-					</tr>
-				{% endfor %}
-				</tbody>
-			</table>
+			<div class="table-container">
+				<table class="table">
+					<thead>
+						<tr>
+							<th style="width: 60px;">ID</th>
+							<th style="width: 200px;">Наименование</th>
+							<th style="width: 100px;">Количество</th>
+							<th style="width: 80px;">Цена</th>
+							<th style="width: 120px;">Город</th>
+							<th style="width: 180px;">Контакты</th>
+							<th style="width: 100px;">Тип</th>
+							<th style="width: 140px;">Дата</th>
+							<th style="width: 80px;"></th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for it in items %}
+						<tr>
+							<td>{{ it.id }}</td>
+							<td title="{{ it.title }}">{{ it.title }}</td>
+							<td>{{ it.quantity or '-' }}</td>
+							<td>{{ it.price or '-' }}</td>
+							<td>{{ it.location or '-' }}</td>
+							<td title="{{ it.contact }}">{{ it.contact or '-' }}</td>
+							<td><span class="badge {{ it.type }}">{{ it.type|loc_type }}</span></td>
+							<td>{{ it.created_at|format_datetime if it.created_at else '-' }}</td>
+							<td><a class="btn" href="/web/detail/{{ it.id }}">Открыть</a></td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
+			</div>
 		</div>
 
 		{% if pages > 1 %}
